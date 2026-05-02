@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface"
+    android:paddingTop="@dimen/stack_md"
+    android:paddingLeft="@dimen/margin_edge"
+    android:paddingRight="@dimen/margin_edge"
+    android:paddingBottom="@dimen/stack_lg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- RFID Power Level -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/zinc_900"
+            android:padding="@dimen/gutter"
+            android:layout_marginBottom="@dimen/stack_md">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/rfid_power_level"
+                android:textColor="@color/outline"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="@dimen/base">
+
+                <TextView
+                    android:id="@+id/tv_power_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="26"
+                    android:textColor="@color/primary_container"
+                    android:textSize="@dimen/data_lg_text_size"
+                    android:fontFamily="sans-serif-medium"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="dBm"
+                    android:textColor="@color/on_surface"
+                    android:textSize="18sp"
+                    android:layout_marginStart="@dimen/base"/>
+
+                <Space
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/tv_power_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/high_power"
+                    android:textColor="@color/primary_container"
+                    android:textSize="@dimen/label_caps_text_size"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.1"
+                    android:background="@color/surface_container_highest"
+                    android:paddingLeft="@dimen/stack_sm"
+                    android:paddingRight="@dimen/stack_sm"
+                    android:paddingTop="@dimen/base"
+                    android:paddingBottom="@dimen/base"/>
+            </LinearLayout>
+
+            <SeekBar
+                android:id="@+id/sb_power"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="30"
+                android:progress="26"
+                android:layout_marginTop="@dimen/stack_sm"/>
+        </LinearLayout>
+
+        <!-- EPC Filter -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/zinc_900"
+            android:padding="@dimen/gutter"
+            android:layout_marginBottom="@dimen/stack_md">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/epc_prefix_filtering"
+                    android:textColor="@color/outline"
+                    android:textSize="@dimen/label_caps_text_size"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.1"/>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switch_epc_filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+
+            <EditText
+                android:id="@+id/et_epc_prefix"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/touch_target_min"
+                android:inputType="text"
+                android:paddingLeft="@dimen/gutter"
+                android:paddingRight="@dimen/gutter"
+                android:background="@color/surface_container_lowest"
+                android:textColor="@color/on_surface"
+                android:textSize="@dimen/data_lg_text_size"
+                android:hint="0xEE02"
+                android:enabled="false"
+                android:layout_marginTop="@dimen/stack_sm"/>
+        </LinearLayout>
+
+        <!-- External Server Config -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/zinc_900"
+            android:padding="@dimen/gutter"
+            android:layout_marginBottom="@dimen/stack_md">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/external_server_config"
+                android:textColor="@color/outline"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="@dimen/stack_sm"/>
+
+            <!-- Wiclax connection status -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="@dimen/stack_sm">
+
+                <TextView
+                    android:id="@+id/tv_status_dot"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:background="@drawable/status_dot_red"
+                    android:layout_marginEnd="@dimen/base"/>
+
+                <TextView
+                    android:id="@+id/tv_connection_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Starting..."
+                    android:textColor="@color/on_surface"
+                    android:textSize="@dimen/body_lg_text_size"/>
+            </LinearLayout>
+
+            <!-- URL -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/server_url"
+                android:textColor="@color/on_surface_variant"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="@dimen/base"/>
+
+            <EditText
+                android:id="@+id/et_server_url"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/touch_target_min"
+                android:inputType="textUri"
+                android:paddingLeft="@dimen/gutter"
+                android:paddingRight="@dimen/gutter"
+                android:background="@color/surface_container_lowest"
+                android:textColor="@color/on_surface"
+                android:textSize="@dimen/body_lg_text_size"
+                android:hint="http://wiclax.com:35014"
+                android:layout_marginBottom="@dimen/stack_sm"/>
+
+            <!-- USER -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/user_label"
+                android:textColor="@color/on_surface_variant"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="@dimen/base"/>
+
+            <EditText
+                android:id="@+id/et_user"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/touch_target_min"
+                android:inputType="text"
+                android:paddingLeft="@dimen/gutter"
+                android:paddingRight="@dimen/gutter"
+                android:background="@color/surface_container_lowest"
+                android:textColor="@color/on_surface"
+                android:textSize="@dimen/body_lg_text_size"
+                android:hint="your_username"
+                android:layout_marginBottom="@dimen/stack_sm"/>
+
+            <!-- DEVICE ID -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/device_id"
+                android:textColor="@color/on_surface_variant"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="@dimen/base"/>
+
+            <EditText
+                android:id="@+id/et_device_id"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/touch_target_min"
+                android:inputType="text"
+                android:paddingLeft="@dimen/gutter"
+                android:paddingRight="@dimen/gutter"
+                android:background="@color/surface_container_lowest"
+                android:textColor="@color/on_surface"
+                android:textSize="@dimen/body_lg_text_size"
+                android:hint="C72-SN-001"
+                android:layout_marginBottom="@dimen/stack_sm"/>
+
+            <!-- Save button -->
+            <Button
+                android:id="@+id/btn_save"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/action_button_height"
+                android:text="SAVE SETTINGS"
+                android:textAllCaps="true"
+                android:textSize="@dimen/body_lg_text_size"
+                android:textStyle="bold"
+                android:backgroundTint="@color/primary_container"
+                android:textColor="@color/zinc_950"
+                style="@style/Widget.Material3.Button"/>
+        </LinearLayout>
+
+        <!-- Hardware Monitor -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="@dimen/stack_md">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:background="@color/zinc_900"
+                android:padding="@dimen/gutter"
+                android:layout_marginEnd="@dimen/gutter">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/module_temp"
+                    android:textColor="@color/outline"
+                    android:textSize="@dimen/label_caps_text_size"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.1"/>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tv_module_temp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--"
+                        android:textColor="@color/on_surface"
+                        android:textSize="@dimen/data_lg_text_size"
+                        android:fontFamily="sans-serif-medium"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/celsius"
+                        android:textColor="@color/zinc_500"
+                        android:textSize="@dimen/label_caps_text_size"
+                        android:layout_marginStart="@dimen/base"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:background="@color/zinc_900"
+                android:padding="@dimen/gutter">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/battery_health"
+                    android:textColor="@color/outline"
+                    android:textSize="@dimen/label_caps_text_size"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.1"/>
+
+                <TextView
+                    android:id="@+id/tv_battery_health"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--"
+                    android:textColor="@color/on_surface"
+                    android:textSize="@dimen/data_lg_text_size"
+                    android:fontFamily="sans-serif-medium"/>
+            </LinearLayout>
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>

@@ -1,0 +1,1122 @@
+openapi: 3.0.3
+info:
+  title: RUFUS Public REST API
+  description: |
+    Public REST API for connecting custom devices to a RUFUS Cloud account, creating sessions, ingesting passings,
+    and reading events/participants.
+
+    Authentication is via API key headers:
+    - `api_key: <key>` (preferred, legacy)
+    - `x-api-key: <key>` (supported)
+
+    Responses are wrapped in a JSON envelope: `{ "body": ... }`.
+  version: 0.1.0
+servers:
+  - url: https://api.runonrufus.com/v0
+    description: Production (v0)
+tags:
+  - name: Devices
+  - name: Sessions
+  - name: Passings
+  - name: Events
+security:
+  - ApiKeyHeader: []
+  - XApiKeyHeader: []
+paths:
+  /devices:
+    get:
+      tags: [Devices]
+      summary: List devices
+      description: Requires `READ` or `READ_WRITE` api key access type.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/LimitDevices'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DevicesListResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Devices]
+      summary: Bind (create) device
+      description: Requires `WRITE` or `READ_WRITE` api key access type.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BindDeviceRequest'
+            examples:
+              example:
+                value:
+                  type: CUSTOM_CHRONO
+                  model: RUFUS_BOX_V1
+                  serial_number: SN-123
+                  alias: My timing device
+      responses:
+        '201':
+          description: Device binded succesfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BindDeviceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeNull'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /devices/{deviceid}:
+    parameters:
+      - $ref: '#/components/parameters/DeviceId'
+    get:
+      tags: [Devices]
+      summary: Get device by id
+      description: Requires `READ` or `READ_WRITE` api key access type.
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceGetResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags: [Devices]
+      summary: Unbind (delete) device
+      description: Requires an api key with `allow_unbind=true`.
+      responses:
+        '200':
+          description: Device unbinded succesfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnbindDeviceResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /devices/{deviceid}/status:
+    parameters:
+      - $ref: '#/components/parameters/DeviceId'
+    patch:
+      tags: [Devices]
+      summary: Report device telemetry/status
+      description: |
+        Requires `WRITE` or `READ_WRITE` api key access type.
+
+        Stale updates are ignored if `reported_at` is older than the current `last_telemetry_at`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceTelemetryRequest'
+            examples:
+              example:
+                value:
+                  reported_at: '2026-04-12T10:00:00.000Z'
+                  device_status: ONLINE
+                  battery_percentage: 87
+                  charging: true
+                  latitude: 12.3
+                  longitude: 13.4
+                  gps_accuracy_m: 10
+      responses:
+        '200':
+          description: Updated (or ignored if stale)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceTelemetryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /sessions:
+    post:
+      tags: [Sessions]
+      summary: Create session
+      description: Requires `WRITE` or `READ_WRITE` api key access type.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+            examples:
+              example:
+                value:
+                  deviceid: 59B35FB49E14C498EE9472B73F7DB2EFC6677AFF0F3CEE0B73FCE110F6370EA4
+                  alias: My session
+      responses:
+        '201':
+          description: Session inserted succesfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeNull'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /sessions/{token_session}:
+    parameters:
+      - $ref: '#/components/parameters/TokenSession'
+    get:
+      tags: [Sessions]
+      summary: Get session by token
+      description: Requires `READ` or `READ_WRITE` api key access type.
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionGetResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /sessions/device/{deviceid}:
+    parameters:
+      - $ref: '#/components/parameters/DeviceId'
+    get:
+      tags: [Sessions]
+      summary: List sessions by device
+      description: Requires `READ` or `READ_WRITE` api key access type.
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionsListResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /sessions/device/{deviceid}/active:
+    parameters:
+      - $ref: '#/components/parameters/DeviceId'
+    get:
+      tags: [Sessions]
+      summary: Get active session for device
+      description: Requires `READ` or `READ_WRITE` api key access type.
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionsListResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /sessions/close/{token_session}:
+    parameters:
+      - $ref: '#/components/parameters/TokenSession'
+    patch:
+      tags: [Sessions]
+      summary: Close session
+      description: Requires `WRITE` or `READ_WRITE` api key access type.
+      responses:
+        '200':
+          description: Session closed succesfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloseSessionResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /passings:
+    post:
+      tags: [Passings]
+      summary: Insert passings
+      description: Requires `WRITE` or `READ_WRITE` api key access type.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InsertPassingsRequest'
+      responses:
+        '201':
+          description: Passings inserted succesfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsertPassingsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /passings/session/{token_session}:
+    parameters:
+      - $ref: '#/components/parameters/TokenSession'
+    get:
+      tags: [Passings]
+      summary: Get session passings
+      description: Requires `READ` or `READ_WRITE` api key access type.
+      parameters:
+        - $ref: '#/components/parameters/First'
+        - $ref: '#/components/parameters/Last'
+        - $ref: '#/components/parameters/PageZeroBased'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PassingsListResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /passings/device/{deviceid}:
+    parameters:
+      - $ref: '#/components/parameters/DeviceId'
+    get:
+      tags: [Passings]
+      summary: Get device passings
+      description: Requires `READ` or `READ_WRITE` api key access type.
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/PageZeroBased'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PassingsListResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /events:
+    get:
+      tags: [Events]
+      summary: List events
+      description: Requires `READ` or `READ_WRITE` api key access type.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/LimitEvents'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventsListResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /events/{event_token}:
+    parameters:
+      - $ref: '#/components/parameters/EventToken'
+    get:
+      tags: [Events]
+      summary: Get event by token
+      description: Requires `READ` or `READ_WRITE` api key access type.
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventGetResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /events/{event_token}/participants:
+    parameters:
+      - $ref: '#/components/parameters/EventToken'
+    get:
+      tags: [Events]
+      summary: List participants by event
+      description: Requires `READ` or `READ_WRITE` api key access type.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/LimitParticipants'
+        - $ref: '#/components/parameters/ParticipantBib'
+        - $ref: '#/components/parameters/ParticipantChip'
+        - $ref: '#/components/parameters/ParticipantRaceToken'
+        - $ref: '#/components/parameters/ParticipantStatus'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantsListResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [Events]
+      summary: Create participant
+      description: |
+        Requires `WRITE` or `READ_WRITE` api key access type.
+
+        Participant corrections (PATCH/DELETE) are intentionally not exposed in the public API.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateParticipantRequest'
+      responses:
+        '201':
+          description: Participant inserted succesfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateParticipantResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Forbidden (includes plan enforcement)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeAny'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflict (duplicate bib/chip/participant)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnvelopeAny'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /events/{event_token}/participants/{participant_token}:
+    parameters:
+      - $ref: '#/components/parameters/EventToken'
+      - $ref: '#/components/parameters/ParticipantToken'
+    get:
+      tags: [Events]
+      summary: Get participant by token
+      description: Requires `READ` or `READ_WRITE` api key access type.
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipantGetResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  securitySchemes:
+    ApiKeyHeader:
+      type: apiKey
+      in: header
+      name: api_key
+      description: API key for authentication.
+    XApiKeyHeader:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: API key for authentication (alternate header).
+  parameters:
+    DeviceId:
+      name: deviceid
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 8
+      description: Device identifier.
+    TokenSession:
+      name: token_session
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 8
+      description: Session token.
+    EventToken:
+      name: event_token
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+      description: Event token (RRM).
+    ParticipantToken:
+      name: participant_token
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 8
+      description: Participant token (RRM).
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: 1-based page.
+    PageZeroBased:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: 0 disables paging. When > 0, behaves like 1-based page.
+    LimitDevices:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 5000
+        default: 5000
+      description: Max items per page (devices).
+    LimitEvents:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 1000
+      description: Max items per page (events).
+    LimitParticipants:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 1000
+      description: Max items per page (participants).
+    First:
+      name: first
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: -1
+      description: First num_passing to include (inclusive). Use -1 to ignore.
+    Last:
+      name: last
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: -1
+      description: Last num_passing to include (inclusive). Use -1 to ignore.
+    From:
+      name: from
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+      description: Filter passings with timestamp >= from.
+    To:
+      name: to
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+      description: Filter passings with timestamp <= to.
+    ParticipantBib:
+      name: bib
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Filter participants by bib.
+    ParticipantChip:
+      name: chip
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Filter participants by chip.
+    ParticipantRaceToken:
+      name: race_token
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Filter participants by race_token.
+    ParticipantStatus:
+      name: status
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Filter participants by status.
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EnvelopeAny'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EnvelopeAny'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EnvelopeAny'
+    PayloadTooLarge:
+      description: Payload too large
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EnvelopeAny'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/EnvelopeNull'
+  schemas:
+    EnvelopeAny:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          description: Operation result body.
+    EnvelopeNull:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          nullable: true
+      required: [body]
+    Pagination:
+      type: object
+      additionalProperties: false
+      properties:
+        page: { type: integer, minimum: 1 }
+        limit: { type: integer, minimum: 1 }
+        total: { type: integer, minimum: 0 }
+        has_more: { type: boolean }
+      required: [page, limit, total, has_more]
+    DeviceSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        deviceid: { type: string }
+        type: { type: string }
+        model: { type: string }
+        alias: { type: string }
+        firmware: { type: string, nullable: true }
+        serial_number: { type: string }
+        last_login: { type: string, format: date-time, nullable: true }
+        creation_date: { type: string, format: date-time, nullable: true }
+        sessions: { type: integer, minimum: 0 }
+        device_status: { type: string, nullable: true }
+        battery_percentage: { type: integer, minimum: 0, maximum: 100, nullable: true }
+        charging: { type: boolean, nullable: true }
+        last_telemetry_at: { type: string, format: date-time, nullable: true }
+        last_reported_latitude: { type: number, nullable: true }
+        last_reported_longitude: { type: number, nullable: true }
+      required: [deviceid, type, model, alias, serial_number]
+    DeviceDetails:
+      allOf:
+        - $ref: '#/components/schemas/DeviceSummary'
+        - type: object
+          additionalProperties: false
+          properties:
+            passings: { type: integer, minimum: 0 }
+            last_seen: { type: string, format: date-time, nullable: true }
+            battery_volts: { type: number, nullable: true }
+            temperature_celsius: { type: integer, nullable: true }
+            gps_accuracy_m: { type: number, nullable: true }
+            network_type: { type: string, nullable: true }
+            signal_strength: { type: integer, nullable: true }
+    BindDeviceRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        type: { type: string }
+        model: { type: string }
+        serial_number: { type: string }
+        alias: { type: string }
+        firmware: { type: string }
+      required: [type, model, serial_number]
+    BindDeviceResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          type: object
+          additionalProperties: false
+          properties:
+            description: { type: string }
+            deviceid: { type: string }
+            already_binded: { type: boolean, nullable: true }
+          required: [description, deviceid]
+      required: [body]
+    UnbindDeviceResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          type: object
+          additionalProperties: false
+          properties:
+            description: { type: string }
+            deviceid: { type: string }
+          required: [description, deviceid]
+      required: [body]
+    DevicesListResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          type: object
+          additionalProperties: false
+          properties:
+            description: { type: string }
+            result:
+              type: array
+              items: { $ref: '#/components/schemas/DeviceSummary' }
+            pagination: { $ref: '#/components/schemas/Pagination' }
+          required: [description, pagination]
+      required: [body]
+    DeviceGetResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          type: object
+          additionalProperties: false
+          properties:
+            description: { type: string }
+            result: { $ref: '#/components/schemas/DeviceDetails' }
+          required: [description]
+      required: [body]
+    DeviceTelemetryRequest:
+      type: object
+      additionalProperties: false
+      description: At least one telemetry field is required.
+      properties:
+        reported_at: { type: string, format: date-time }
+        device_status: { type: string }
+        battery_percentage: { type: integer, minimum: 0, maximum: 100 }
+        battery_volts: { type: number, minimum: 0 }
+        charging: { type: boolean }
+        temperature_celsius: { type: integer, minimum: -100, maximum: 200 }
+        latitude: { type: number, minimum: -90, maximum: 90 }
+        longitude: { type: number, minimum: -180, maximum: 180 }
+        gps_accuracy_m: { type: number, minimum: 0 }
+        network_type: { type: string }
+        signal_strength: { type: integer, minimum: -200, maximum: 200 }
+    DeviceTelemetryResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          type: object
+          additionalProperties: false
+          properties:
+            description: { type: string }
+            deviceid: { type: string }
+            result:
+              type: object
+              additionalProperties: false
+              properties:
+                deviceid: { type: string }
+                last_telemetry_at: { type: string, format: date-time }
+                device_status: { type: string, nullable: true }
+                battery_percentage: { type: integer, nullable: true }
+                battery_volts: { type: number, nullable: true }
+                charging: { type: boolean, nullable: true }
+                temperature_celsius: { type: integer, nullable: true }
+                last_reported_latitude: { type: number, nullable: true }
+                last_reported_longitude: { type: number, nullable: true }
+                gps_accuracy_m: { type: number, nullable: true }
+                network_type: { type: string, nullable: true }
+                signal_strength: { type: integer, nullable: true }
+          required: [description, deviceid]
+      required: [body]
+    CreateSessionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        deviceid: { type: string }
+        alias: { type: string }
+      required: [deviceid]
+    CreateSessionResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          type: object
+          additionalProperties: false
+          properties:
+            description: { type: string }
+            token_session: { type: string }
+          required: [description, token_session]
+      required: [body]
+    CloseSessionResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          type: object
+          additionalProperties: false
+          properties:
+            description: { type: string }
+            token_session: { type: string }
+          required: [description, token_session]
+      required: [body]
+    SessionDetails:
+      type: object
+      additionalProperties: false
+      properties:
+        token_session: { type: string }
+        alias: { type: string }
+        creation_date: { type: string, format: date-time }
+        duration: { type: number, nullable: true }
+        active: { type: boolean }
+        passings: { type: integer, minimum: 0 }
+        first: { type: string, format: date-time, nullable: true }
+        last: { type: string, format: date-time, nullable: true }
+      required: [token_session, alias, active]
+    SessionSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        token_session: { type: string }
+        alias: { type: string }
+        creation_date: { type: string, format: date-time }
+        duration: { type: number, nullable: true }
+        active: { type: boolean }
+        passings: { type: integer, minimum: 0 }
+      required: [token_session, alias, active]
+    SessionGetResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          type: object
+          additionalProperties: false
+          properties:
+            description: { type: string }
+            result:
+              type: array
+              items: { $ref: '#/components/schemas/SessionDetails' }
+          required: [description]
+      required: [body]
+    SessionsListResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          type: object
+          additionalProperties: false
+          properties:
+            description: { type: string }
+            result:
+              type: array
+              items: { $ref: '#/components/schemas/SessionSummary' }
+          required: [description]
+      required: [body]
+    Passing:
+      type: object
+      additionalProperties: false
+      properties:
+        timestamp: { type: string, format: date-time }
+        num_passing: { type: integer, minimum: 0 }
+        bib: { type: string }
+        participant_id: { type: string, nullable: true }
+        chip: { type: string, nullable: true }
+        latitude: { type: number, nullable: true }
+        longitude: { type: number, nullable: true }
+        status: { type: string, nullable: true }
+        timezone: { type: string, nullable: true }
+        gender: { type: string, nullable: true }
+      required: [timestamp, num_passing, bib]
+    InsertPassingsRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        token_session: { type: string }
+        passings_list:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/Passing' }
+      required: [token_session, passings_list]
+    InsertPassingsResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          type: object
+          additionalProperties: false
+          properties:
+            description: { type: string }
+            token_session: { type: string }
+            inserted_count: { type: integer, minimum: 0 }
+            duplicate_count: { type: integer, minimum: 0 }
+          required: [description, token_session]
+      required: [body]
+    PassingsListResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          type: object
+          additionalProperties: false
+          properties:
+            description: { type: string }
+            result:
+              type: array
+              items: { $ref: '#/components/schemas/Passing' }
+          required: [description]
+      required: [body]
+    EventSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        event_token: { type: string }
+        name: { type: string, nullable: true }
+        edition: { type: string, nullable: true }
+        location: { type: string, nullable: true }
+        start_date: { type: string, format: date-time, nullable: true }
+        end_date: { type: string, format: date-time, nullable: true }
+        status: { type: string, nullable: true }
+      required: [event_token]
+    EventsListResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          type: object
+          additionalProperties: false
+          properties:
+            description: { type: string }
+            result:
+              type: array
+              items: { $ref: '#/components/schemas/EventSummary' }
+            pagination: { $ref: '#/components/schemas/Pagination' }
+          required: [description, result, pagination]
+      required: [body]
+    EventGetResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          type: object
+          properties:
+            description: { type: string }
+            result:
+              type: object
+              description: Event details (fields follow RRM schema; large object).
+              additionalProperties: true
+          required: [description]
+      required: [body]
+    CustomField:
+      type: object
+      additionalProperties: false
+      properties:
+        field_name: { type: string }
+        value: { type: string, nullable: true }
+      required: [field_name, value]
+    Participant:
+      type: object
+      additionalProperties: false
+      properties:
+        name: { type: string }
+        lastname: { type: string, nullable: true }
+        bib: { type: string, nullable: true }
+        chip: { type: string, nullable: true }
+        gender: { type: string, nullable: true }
+        dob: { type: string, format: date-time, nullable: true }
+        yob: { type: integer, nullable: true }
+        country: { type: string, nullable: true }
+        city: { type: string, nullable: true }
+        age_group: { type: string, nullable: true }
+        team: { type: string, nullable: true }
+        club: { type: string, nullable: true }
+        email: { type: string, format: email, nullable: true }
+        telephone: { type: string, nullable: true }
+        group_id: { type: string, nullable: true }
+        race_token: { type: string, nullable: true }
+        custom_fields:
+          type: array
+          nullable: true
+          items: { $ref: '#/components/schemas/CustomField' }
+        individual_start_time:
+          type: string
+          nullable: true
+          description: 'HH:mm:ss'
+      required: [name, bib]
+    CreateParticipantRequest:
+      allOf:
+        - $ref: '#/components/schemas/Participant'
+      example:
+        name: John
+        lastname: Doe
+        bib: '17'
+        chip: '000000000000017'
+        race_token: RACE_1
+    ParticipantSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        event_token: { type: string }
+        participant_token: { type: string }
+        name: { type: string }
+        lastname: { type: string, nullable: true }
+        bib: { type: string, nullable: true }
+        chip: { type: string, nullable: true }
+        status: { type: string, nullable: true }
+        gender: { type: string, nullable: true }
+        dob: { type: string, format: date-time, nullable: true }
+        yob: { type: integer, nullable: true }
+        country: { type: string, nullable: true }
+        city: { type: string, nullable: true }
+        age_group: { type: string, nullable: true }
+        team: { type: string, nullable: true }
+        club: { type: string, nullable: true }
+        email: { type: string, format: email, nullable: true }
+        telephone: { type: string, nullable: true }
+        group_id: { type: string, nullable: true }
+        race_token: { type: string, nullable: true }
+        custom_fields:
+          type: array
+          nullable: true
+          items: { $ref: '#/components/schemas/CustomField' }
+        individual_start_time: { type: string, nullable: true }
+      required: [event_token, participant_token, name]
+    ParticipantsListResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          type: object
+          additionalProperties: false
+          properties:
+            description: { type: string }
+            result:
+              type: array
+              items: { $ref: '#/components/schemas/ParticipantSummary' }
+            pagination: { $ref: '#/components/schemas/Pagination' }
+          required: [description, result, pagination]
+      required: [body]
+    ParticipantGetResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          type: object
+          additionalProperties: false
+          properties:
+            description: { type: string }
+            result: { $ref: '#/components/schemas/ParticipantSummary' }
+          required: [description, result]
+      required: [body]
+    CreateParticipantResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        body:
+          type: object
+          additionalProperties: false
+          properties:
+            description: { type: string }
+            event_token: { type: string }
+            participant_token: { type: string }
+            result:
+              type: object
+              additionalProperties: true
+          required: [description, event_token, participant_token]
+      required: [body]

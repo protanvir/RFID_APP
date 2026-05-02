@@ -1,0 +1,90 @@
+[
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\drawable_status_dot_gray.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\drawable\\status_dot_gray.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\layout_fragment_dashboard.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\layout\\fragment_dashboard.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\layout_fragment_settings.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\layout\\fragment_settings.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\xml_network_security_config.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\xml\\network_security_config.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\drawable-nodpi_ticon.png.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\drawable-nodpi\\ticon.png"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\drawable-nodpi_tas_logo.png.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\drawable-nodpi\\tas_logo.png"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\drawable-v24_ic_launcher_foreground.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\drawable-v24\\ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\mipmap-anydpi_ic_launcher.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\mipmap-anydpi\\ic_launcher.xml"
+    },
+    {
+        "merged": "com.tas.racetiming.app-merged_res-32:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.tas.racetiming.app-main-34:/drawable/ic_launcher_background.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\drawable_status_dot_green.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\drawable\\status_dot_green.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\xml_backup_rules.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\xml\\backup_rules.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\menu_bottom_nav.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\menu\\bottom_nav.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\layout_activity_main.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\xml_data_extraction_rules.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\xml\\data_extraction_rules.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\drawable_ic_timer.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\drawable\\ic_timer.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\drawable_status_dot_red.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\drawable\\status_dot_red.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\drawable_status_dot_orange.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\drawable\\status_dot_orange.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\color_bottom_nav_color.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\color\\bottom_nav_color.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\drawable_ic_theme.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\drawable\\ic_theme.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\drawable_ic_settings.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\drawable\\ic_settings.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-merged_res-32:\\layout_activity_splash.xml.flat",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-34:\\layout\\activity_splash.xml"
+    },
+    {
+        "merged": "com.tas.racetiming.app-merged_res-32:/mipmap-anydpi_ic_launcher.xml.flat",
+        "source": "com.tas.racetiming.app-main-34:/mipmap-anydpi/ic_launcher.xml"
+    }
+]

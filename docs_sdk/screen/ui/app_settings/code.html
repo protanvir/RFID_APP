@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;family=Inter:wght@400..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary": "#00363d",
+                    "surface-container-low": "#1f1b10",
+                    "on-primary-fixed-variant": "#544600",
+                    "surface-variant": "#393528",
+                    "primary-container": "#ffd700",
+                    "on-tertiary-container": "#006a70",
+                    "surface": "#161308",
+                    "surface-container": "#231f14",
+                    "tertiary-container": "#00f1ff",
+                    "on-background": "#eae2cf",
+                    "primary-fixed-dim": "#e9c400",
+                    "secondary-fixed": "#9cf0ff",
+                    "background": "#161308",
+                    "on-primary-fixed": "#221b00",
+                    "on-tertiary": "#00363a",
+                    "inverse-on-surface": "#343024",
+                    "on-primary": "#3a3000",
+                    "on-error-container": "#ffdad6",
+                    "secondary-fixed-dim": "#00daf3",
+                    "surface-dim": "#161308",
+                    "outline": "#999077",
+                    "surface-container-lowest": "#110e05",
+                    "on-primary-container": "#705e00",
+                    "on-secondary-container": "#00616d",
+                    "on-tertiary-fixed-variant": "#004f54",
+                    "on-tertiary-fixed": "#002022",
+                    "error": "#ffb4ab",
+                    "secondary": "#bdf4ff",
+                    "surface-container-high": "#2e2a1e",
+                    "secondary-container": "#00e3fd",
+                    "outline-variant": "#4d4732",
+                    "on-surface": "#eae2cf",
+                    "on-secondary-fixed": "#001f24",
+                    "error-container": "#93000a",
+                    "primary": "#fff6df",
+                    "surface-tint": "#e9c400",
+                    "tertiary": "#defcff",
+                    "tertiary-fixed": "#79f5ff",
+                    "primary-fixed": "#ffe16d",
+                    "tertiary-fixed-dim": "#00dbe8",
+                    "on-surface-variant": "#d0c6ab",
+                    "inverse-surface": "#eae2cf",
+                    "on-error": "#690005",
+                    "surface-bright": "#3d392c",
+                    "on-secondary-fixed-variant": "#004f58",
+                    "inverse-primary": "#705d00",
+                    "surface-container-highest": "#393528"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-md": "24px",
+                    "gutter": "16px",
+                    "stack-lg": "40px",
+                    "base": "8px",
+                    "stack-sm": "12px",
+                    "touch-target-min": "56px",
+                    "margin-edge": "24px"
+            },
+            "fontFamily": {
+                    "timer-xl": ["Space Grotesk"],
+                    "label-caps": ["Inter"],
+                    "data-lg": ["Space Grotesk"],
+                    "headline-md": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "timer-xl": ["72px", {"lineHeight": "80px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "800"}],
+                    "data-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+        }
+        body {
+            background-color: #161308;
+            color: #eae2cf;
+            -webkit-font-smoothing: antialiased;
+        }
+        .rugged-card {
+            background-color: #1E1E1E;
+            border-left: 4px solid #393528;
+        }
+        .active-border {
+            border: 2px solid #ffd700;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 12px;
+            cursor: pointer;
+            background: #393528;
+            border-radius: 0;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            height: 32px;
+            width: 32px;
+            background: #ffd700;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -10px;
+        }
+    </style>
+</head>
+<body class="font-body-lg">
+<!-- TopAppBar Section -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-zinc-950 border-b-2 border-zinc-800">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-yellow-400" data-icon="sensors">sensors</span>
+<h1 class="font-inter tracking-tighter uppercase font-black text-xl text-yellow-400 tracking-widest">RACE_TIMING_OS</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-yellow-400" data-icon="battery_charging_full">battery_charging_full</span>
+</div>
+</header>
+<main class="pt-20 pb-32 px-margin-edge flex flex-col gap-stack-md">
+<!-- Screen Title -->
+<div class="flex items-center gap-4 py-4 border-b border-surface-variant">
+<span class="material-symbols-outlined text-on-surface" data-icon="arrow_back">arrow_back</span>
+<h2 class="font-headline-md text-headline-md uppercase tracking-widest">SETTINGS</h2>
+</div>
+<!-- RFID Power Section -->
+<section class="rugged-card p-6 flex flex-col gap-4">
+<div class="flex justify-between items-end">
+<div>
+<p class="font-label-caps text-label-caps text-outline uppercase">RFID POWER LEVEL</p>
+<h3 class="font-timer-xl text-timer-xl text-primary-container">26 <span class="text-3xl font-bold">dBm</span></h3>
+</div>
+<div class="bg-surface-container-highest px-3 py-1 border border-primary-container mb-4">
+<p class="font-label-caps text-label-caps text-primary-container">HIGH POWER</p>
+</div>
+</div>
+<div class="mt-2">
+<input class="w-full h-touch-target-min" max="30" min="0" type="range" value="26"/>
+<div class="flex justify-between mt-2 font-label-caps text-label-caps text-zinc-500">
+<span>0 DBM</span>
+<span>15 DBM</span>
+<span>30 DBM</span>
+</div>
+</div>
+</section>
+<!-- EPC Filter Section -->
+<section class="rugged-card p-6 flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<p class="font-label-caps text-label-caps text-outline uppercase">EPC PREFIX FILTERING</p>
+<button class="w-16 h-8 bg-primary-container flex items-center px-1 rounded-full">
+<div class="w-6 h-6 bg-zinc-950 rounded-full ml-auto"></div>
+</button>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant">HEX PREFIX</label>
+<input class="h-touch-target-min bg-surface-container-lowest border-2 border-outline-variant text-white px-4 font-timer-xl text-data-lg focus:border-primary-container focus:ring-0 outline-none uppercase" type="text" value="0xEE02"/>
+</div>
+</section>
+<!-- Image Content Component -->
+<div class="relative h-48 overflow-hidden border-2 border-surface-variant">
+<img alt="Rugged industrial equipment interface" class="w-full h-full object-cover grayscale opacity-50 contrast-125" data-alt="A macro close-up of a rugged industrial handheld device showing a reinforced rubberized chassis and a bright high-contrast glowing screen in a dark, dusty warehouse environment. The lighting is harsh and directional, highlighting the textures of the protective gear. The color scheme is dominated by deep blacks and electric safety yellow, creating a professional, heavy-duty mission-critical atmosphere." src="https://lh3.googleusercontent.com/aida/ADBb0uibx3i_85DkJ7cKQbiKlLXf0vLH6ltKkN_YJrWMJ1xIiTx6eb7LnW-P3-eJGt_xlY07PZZzJIVV0az4lde6-uoiU5aW40zS9xLVorSUwkoSIms_XhAgQBYnOKj3gBlMGEjlWMEfKXOrDYTz0tUpAQ_jShsQcSmwN3zFYdYX91skP6LmtjYyNupE7lGnf-eDwBL-ilBORjdsB896qW17pHbfXui1-PpL7xnw7ryHSRNSLwflYo6tF0Qwaxd17BWWV7DHoiaUyF3SeQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
+<div class="absolute bottom-4 left-6">
+<p class="font-label-caps text-label-caps text-primary-container">MODULE STATUS: ACTIVE</p>
+</div>
+</div>
+<!-- External Server Section -->
+<section class="rugged-card p-6 flex flex-col gap-6">
+<p class="font-label-caps text-label-caps text-outline uppercase">EXTERNAL SERVER CONFIG</p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant">SERVER URL</label>
+<input class="h-touch-target-min bg-surface-container-lowest border-2 border-outline-variant text-white px-4 font-timer-xl text-data-lg focus:border-primary-container focus:ring-0 outline-none" placeholder="192.168.1.100" type="text"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant">PORT</label>
+<input class="h-touch-target-min bg-surface-container-lowest border-2 border-outline-variant text-white px-4 font-timer-xl text-data-lg focus:border-primary-container focus:ring-0 outline-none" type="text" value="8080"/>
+</div>
+</div>
+<button class="w-full h-16 bg-primary-container text-zinc-950 font-black uppercase tracking-widest text-lg flex items-center justify-center gap-3 active:bg-white active:scale-95 transition-all">
+<span class="material-symbols-outlined" data-icon="sync">sync</span>
+                TEST CONNECTION
+            </button>
+</section>
+<!-- Device Info Section -->
+<section class="grid grid-cols-2 gap-4">
+<div class="rugged-card p-4 flex flex-col gap-1">
+<p class="font-label-caps text-label-caps text-outline uppercase">MODULE TEMP</p>
+<div class="flex items-baseline gap-2">
+<span class="font-data-lg text-data-lg text-white">42.5</span>
+<span class="font-label-caps text-label-caps text-zinc-500">°C</span>
+</div>
+</div>
+<div class="rugged-card p-4 flex flex-col gap-1">
+<p class="font-label-caps text-label-caps text-outline uppercase">BATTERY HEALTH</p>
+<div class="flex items-baseline gap-2">
+<span class="font-data-lg text-data-lg text-white">OPTIMAL</span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar Section -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-stretch h-20 bg-zinc-950 border-t-2 border-zinc-800">
+<a class="flex flex-col items-center justify-center text-zinc-500 h-full w-full hover:bg-zinc-800 transition-all duration-100 active:scale-95" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="timer">timer</span>
+<span class="font-inter text-xs font-bold uppercase tracking-widest">LIVE READS</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-zinc-900 text-yellow-400 border-t-4 border-yellow-400 h-full w-full hover:bg-zinc-800 transition-all duration-100 active:scale-95" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="settings">settings</span>
+<span class="font-inter text-xs font-bold uppercase tracking-widest">SETTINGS</span>
+</a>
+</nav>
+</body></html>

@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/surface">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="@dimen/stack_sm"
+        android:paddingBottom="@dimen/stack_sm"
+        android:paddingLeft="@dimen/margin_edge"
+        android:paddingRight="@dimen/margin_edge"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <!-- Session Timer -->
+            <TextView
+                android:id="@+id/tv_session_timer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="--:--:--"
+                android:textColor="@color/primary_container"
+                android:textSize="@dimen/timer_text_size"
+                android:fontFamily="sans-serif-medium"
+                android:letterSpacing="-0.02"
+                android:includeFontPadding="false"
+                android:background="@color/zinc_900"
+                android:padding="@dimen/stack_sm"
+                android:layout_marginBottom="@dimen/stack_sm"/>
+
+            <!-- KPI Grid -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="@dimen/stack_sm">
+
+                <LinearLayout
+                    android:id="@+id/card_total_reads"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="@color/zinc_900"
+                    android:padding="@dimen/gutter"
+                    android:layout_marginEnd="@dimen/gutter">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/total_reads"
+                        android:textColor="@color/outline"
+                        android:textSize="@dimen/label_caps_text_size"
+                        android:letterSpacing="0.1"
+                        android:textAllCaps="true"
+                        android:layout_marginBottom="@dimen/base"/>
+
+                    <TextView
+                        android:id="@+id/tv_total_reads"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textColor="@color/primary_container"
+                        android:textSize="@dimen/data_lg_text_size"
+                        android:fontFamily="sans-serif-medium"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/card_unique_tags"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:background="@color/zinc_900"
+                    android:padding="@dimen/gutter">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/unique_tags"
+                        android:textColor="@color/outline"
+                        android:textSize="@dimen/label_caps_text_size"
+                        android:letterSpacing="0.1"
+                        android:textAllCaps="true"
+                        android:layout_marginBottom="@dimen/base"/>
+
+                    <TextView
+                        android:id="@+id/tv_unique_tags"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textColor="@color/primary_container"
+                        android:textSize="@dimen/data_lg_text_size"
+                        android:fontFamily="sans-serif-medium"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Send Status Indicator -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/zinc_900"
+                android:padding="@dimen/stack_sm"
+                android:layout_marginBottom="@dimen/stack_sm">
+
+                <View
+                    android:id="@+id/v_status_dot"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:background="@drawable/status_dot_gray"
+                    android:layout_marginEnd="@dimen/base"/>
+
+                <TextView
+                    android:id="@+id/tv_send_status"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Ready"
+                    android:textColor="@color/on_surface"
+                    android:textSize="@dimen/label_caps_text_size"
+                    android:letterSpacing="0.05"/>
+
+                <TextView
+                    android:id="@+id/tv_send_counts"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textColor="@color/on_surface_variant"
+                    android:textSize="10sp"/>
+            </LinearLayout>
+
+            <!-- Action Buttons: Start/Stop + Clear side by side -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="@dimen/stack_sm">
+
+                <Button
+                    android:id="@+id/btn_scan"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/action_button_height"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="@dimen/base"
+                    android:text="@string/start_scanning"
+                    android:textAllCaps="true"
+                    android:textSize="@dimen/body_lg_text_size"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.05"
+                    android:backgroundTint="@color/start_green"
+                    style="@style/Widget.Material3.Button"/>
+
+                <Button
+                    android:id="@+id/btn_clear"
+                    android:layout_width="0dp"
+                    android:layout_height="@dimen/action_button_height"
+                    android:layout_weight="1"
+                    android:text="@string/clear_reads"
+                    android:textAllCaps="true"
+                    android:textSize="@dimen/body_lg_text_size"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.05"
+                    android:backgroundTint="@color/outline"
+                    style="@style/Widget.Material3.Button"/>
+            </LinearLayout>
+
+            <!-- Live Feed -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/live_feed"
+                android:textColor="@color/on_surface"
+                android:textSize="@dimen/headline_md_text_size"
+                android:layout_marginBottom="@dimen/stack_sm"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxHeight="500dp"
+                android:orientation="vertical"
+                android:background="@color/zinc_900"
+                android:layout_marginBottom="@dimen/stack_md">
+
+                <!-- Feed header -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:background="@color/zinc_950"
+                    android:padding="@dimen/stack_sm">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/bib_header"
+                        android:textColor="@color/zinc_400"
+                        android:textSize="10sp"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.1"/>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="@string/time_header"
+                        android:textColor="@color/zinc_400"
+                        android:textSize="10sp"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.1"/>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="end"
+                        android:text="@string/rssi_header"
+                        android:textColor="@color/zinc_400"
+                        android:textSize="10sp"
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.1"/>
+                </LinearLayout>
+
+                <!-- Feed list container -->
+                <LinearLayout
+                    android:id="@+id/feed_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"/>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+
+</FrameLayout>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TAS Timer</string>
+    <string name="tab_dashboard">LIVE READS</string>
+    <string name="tab_settings">SETTINGS</string>
+    <string name="elapsed_session_time">ELAPSED SESSION TIME</string>
+    <string name="total_reads">TOTAL READS</string>
+    <string name="unique_tags">UNIQUE TAGS</string>
+    <string name="live_feed">LIVE FEED</string>
+    <string name="last_100_reads">LAST 100 READS</string>
+    <string name="bib_header">BIB #</string>
+    <string name="time_header">TIME</string>
+    <string name="rssi_header">RSSI</string>
+    <string name="start_scanning">START</string>
+    <string name="stop_scanning">STOP</string>
+    <string name="clear_reads">CLEAR</string>
+    <string name="rfid_active">RFID ACTIVE</string>
+    <string name="recording">RECORDING</string>
+    <string name="title_settings">SETTINGS</string>
+
+    <!-- Settings -->
+    <string name="rfid_power_level">RFID POWER LEVEL</string>
+    <string name="high_power">HIGH POWER</string>
+    <string name="medium_power">MEDIUM POWER</string>
+    <string name="low_power">LOW POWER</string>
+    <string name="epc_prefix_filtering">EPC PREFIX FILTERING</string>
+    <string name="hex_prefix">HEX PREFIX</string>
+    <string name="external_server_config">EXTERNAL SERVER CONFIG</string>
+    <string name="server_url">SERVER URL</string>
+    <string name="port">PORT</string>
+    <string name="test_connection">TEST CONNECTION</string>
+    <string name="module_temp">MODULE TEMP</string>
+    <string name="battery_health">BATTERY HEALTH</string>
+    <string name="module_status_active">MODULE STATUS: ACTIVE</string>
+    <string name="optimal">OPTIMAL</string>
+    <string name="celsius">°C</string>
+    <string name="dbm">dBm</string>
+    <string name="api_key">API KEY</string>
+    <string name="platform">PLATFORM</string>
+    <string name="wiclax">Wiclax</string>
+    <string name="rufus">RunOnRufus</string>
+    <string name="off">Off</string>
+    <string name="api_key_label">API KEY</string>
+    <string name="server_status">SERVER STATUS</string>
+    <string name="server_stopped">Stopped</string>
+    <string name="server_listening">Listening</string>
+    <string name="server_connected">Connected</string>
+    <string name="user_label">USER</string>
+    <string name="device_id">DEVICE ID</string>
+    <string name="start_server">START SERVER</string>
+    <string name="stop_server">STOP SERVER</string>
+</resources>
