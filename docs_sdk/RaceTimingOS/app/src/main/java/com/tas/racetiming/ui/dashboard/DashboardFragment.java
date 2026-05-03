@@ -22,7 +22,7 @@ import com.tas.racetiming.R;
 import com.tas.racetiming.model.SessionData;
 import com.tas.racetiming.model.TagRead;
 import com.tas.racetiming.network.RufusClient;
-import com.tas.racetiming.network.WiclaxClient;
+import com.tas.racetiming.network.UploadManager;
 import com.tas.racetiming.tools.FileUtils;
 import com.tas.racetiming.uhf.UHFManager;
 
@@ -81,25 +81,31 @@ public class DashboardFragment extends Fragment {
 
         timerHandler.post(timerRunnable);
 
-        WiclaxClient wc = WiclaxClient.getInstance();
-        wc.addListener((connected, info) -> {
-            String dbg = wc.getDebugInfo();
-            int sent = 0, fail = 0, reads = 0;
-            try {
-                for (String p : dbg.split(" ")) {
-                    if (p.startsWith("sent=")) sent = Integer.parseInt(p.substring(5));
-                    if (p.startsWith("fail=")) fail = Integer.parseInt(p.substring(5));
-                    if (p.startsWith("reads=")) reads = Integer.parseInt(p.substring(6));
-                }
-            } catch (Exception ignored) {}
-            updateSendStatus(sent, fail, reads, "Wiclax");
-        });
-
-        RufusClient rc = RufusClient.getInstance();
-        rc.addListener(status -> updateRufusStatus(status));
+        UploadManager um = UploadManager.getInstance();
+        um.init(requireActivity().getSharedPreferences("tas_timer_settings", 0));
+        um.addListener(uploadListener);
+        um.start();
 
         return view;
     }
+
+    private final UploadManager.UploadListener uploadListener = (platform, sent, failed, pending) -> {
+        if ("off".equals(platform)) {
+            statusDot.setBackgroundResource(R.drawable.status_dot_gray);
+            tvSendStatus.setText("Ready");
+            tvSendCounts.setText("");
+            return;
+        }
+        if (pending > 0) {
+            statusDot.setBackgroundResource(R.drawable.status_dot_orange);
+            tvSendStatus.setText("Pending: " + pending);
+            tvSendCounts.setText("");
+        } else {
+            statusDot.setBackgroundResource(R.drawable.status_dot_green);
+            tvSendStatus.setText(platform.substring(0, 1).toUpperCase() + platform.substring(1) + " OK");
+            tvSendCounts.setText("");
+        }
+    };
 
     public void onTriggerPressed() {
         onScanClick();
@@ -108,7 +114,6 @@ public class DashboardFragment extends Fragment {
     private void onScanClick() {
         UHFManager uhf = UHFManager.getInstance();
         if (session.isScanning()) {
-            // STOP
             session.stop();
             uhf.stopInventory();
             if ("rufus".equals(getPlatform())) {
@@ -116,7 +121,6 @@ public class DashboardFragment extends Fragment {
             }
             updateScanButton(false);
         } else {
-            // START – re-set the callback because stopInventory() clears it
             if (!uhf.isInitialized()) {
                 if (getActivity() != null) {
                     uhf.init(getActivity());
@@ -126,13 +130,10 @@ public class DashboardFragment extends Fragment {
             session.start();
 
             if ("rufus".equals(getPlatform())) {
-                RufusClient rc = RufusClient.getInstance();
-                rc.startSession(new RufusClient.SessionCallback() {
-                    @Override
-                    public void onReady() {}
-                    @Override
-                    public void onError(String message) {
-                        Toast.makeText(getContext(), "Rufus: " + message, Toast.LENGTH_SHORT).show();
+                RufusClient.getInstance().startSession(new RufusClient.SessionCallback() {
+                    @Override public void onReady() {}
+                    @Override public void onError(String msg) {
+                        Toast.makeText(getContext(), "Rufus: " + msg, Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -152,14 +153,7 @@ public class DashboardFragment extends Fragment {
         renderFeed();
         playBeep();
         FileUtils.writeTagToCsv(epc, rssi);
-        String platform = getPlatform();
-        if ("rufus".equals(platform)) {
-            Log.i("TAG_READ", "sending to Rufus...");
-            RufusClient.getInstance().sendPassing(epc);
-        } else if ("wiclax".equals(platform)) {
-            Log.i("TAG_READ", "sending to Wiclax...");
-            WiclaxClient.getInstance().sendPassing(epc, rssi);
-        }
+        UploadManager.getInstance().enqueue(epc, rssi);
     }
 
     private String getPlatform() {
@@ -203,41 +197,6 @@ public class DashboardFragment extends Fragment {
                 toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 60);
             }
         } catch (Exception ignored) {}
-    }
-
-    private void updateSendStatus(int sent, int fail, int reads, String label) {
-        boolean hasData = reads > 0;
-        boolean allOk = sent > 0 && fail == 0;
-        boolean anyFail = fail > 0;
-        if (hasData && allOk) {
-            statusDot.setBackgroundResource(R.drawable.status_dot_green);
-            tvSendStatus.setText(label + " OK");
-        } else if (anyFail) {
-            statusDot.setBackgroundResource(R.drawable.status_dot_red);
-            tvSendStatus.setText(label + " errors");
-        } else if (hasData) {
-            statusDot.setBackgroundResource(R.drawable.status_dot_orange);
-            tvSendStatus.setText(label + "...");
-        } else {
-            statusDot.setBackgroundResource(R.drawable.status_dot_gray);
-            tvSendStatus.setText("Ready");
-        }
-        tvSendCounts.setText("OK " + sent + " / Fail " + fail);
-    }
-
-    private void updateRufusStatus(String s) {
-        boolean isError = s.contains("error") || s.contains("fail") || s.contains("No") || s.contains("Not");
-        boolean isBusy = s.contains("…") || s.contains("Session active") || s.contains("Bound") || s.contains("Sent");
-        if (isError) {
-            statusDot.setBackgroundResource(R.drawable.status_dot_red);
-            tvSendStatus.setText(s);
-        } else if (isBusy) {
-            statusDot.setBackgroundResource(R.drawable.status_dot_green);
-            tvSendStatus.setText(s);
-        } else {
-            statusDot.setBackgroundResource(R.drawable.status_dot_gray);
-            tvSendStatus.setText("Rufus " + s);
-        }
     }
 
     private void shareCsv() {
@@ -318,6 +277,7 @@ public class DashboardFragment extends Fragment {
             uhf.stopInventory();
         }
         RufusClient.getInstance().closeSession();
+        UploadManager.getInstance().stop();
         timerHandler.removeCallbacks(timerRunnable);
         if (toneGenerator != null) {
             toneGenerator.release();
