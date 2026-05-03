@@ -3253,6 +3253,7 @@ id bounceBoth
 id bounceEnd
 id bounceStart
 id btn_clear
+id btn_download_csv
 id btn_save
 id btn_scan
 id btn_settings
@@ -3939,6 +3940,7 @@ string clear_reads
 string clear_text_end_icon_content_description
 string dbm
 string device_id
+string download_csv
 string elapsed_session_time
 string epc_prefix_filtering
 string error_a11y_label
@@ -4058,6 +4060,7 @@ string mtrl_switch_track_decoration_path
 string mtrl_switch_track_path
 string mtrl_timepicker_cancel
 string mtrl_timepicker_confirm
+string no_csv_today
 string off
 string optimal
 string password_toggle_content_description
@@ -5381,4 +5384,5 @@ styleable include constraintSet
 xml backup_rules
 xml data_extraction_rules
 xml device_filter
+xml file_paths
 xml network_security_config

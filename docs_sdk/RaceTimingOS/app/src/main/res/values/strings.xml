@@ -49,4 +49,6 @@
     <string name="device_id">DEVICE ID</string>
     <string name="start_server">START SERVER</string>
     <string name="stop_server">STOP SERVER</string>
+    <string name="download_csv">DOWNLOAD CSV</string>
+    <string name="no_csv_today">No CSV data for today</string>
 </resources>

@@ -1,7 +1,9 @@
 package com.tas.racetiming.ui.dashboard;
 
+import android.content.Intent;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -11,8 +13,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
 import com.tas.racetiming.R;
@@ -22,6 +26,7 @@ import com.tas.racetiming.network.WiclaxClient;
 import com.tas.racetiming.tools.FileUtils;
 import com.tas.racetiming.uhf.UHFManager;
 
+import java.io.File;
 import java.util.Locale;
 
 import java.util.LinkedList;
@@ -29,7 +34,7 @@ import java.util.LinkedList;
 public class DashboardFragment extends Fragment {
 
     private TextView tvTimer, tvTotalReads, tvUniqueTags, tvSendStatus, tvSendCounts;
-    private Button btnScan, btnClear;
+    private Button btnScan, btnClear, btnDownloadCsv;
     private LinearLayout feedList;
     private View statusDot;
     private final SessionData session = new SessionData();
@@ -41,12 +46,11 @@ public class DashboardFragment extends Fragment {
     private final Runnable timerRunnable = new Runnable() {
         @Override
         public void run() {
-            if (session.isScanning()) {
-                tvTimer.setText(session.getElapsedTimeFormatted());
-                tvTotalReads.setText(String.valueOf(session.getTotalReads()));
-                tvUniqueTags.setText(String.valueOf(session.getUniqueTagCount()));
-                timerHandler.postDelayed(this, 200);
-            }
+            String time = android.text.format.DateFormat.format("HH:mm:ss", System.currentTimeMillis()).toString();
+            tvTimer.setText(time);
+            tvTotalReads.setText(String.valueOf(session.getTotalReads()));
+            tvUniqueTags.setText(String.valueOf(session.getUniqueTagCount()));
+            timerHandler.postDelayed(this, 1000);
         }
     };
 
@@ -59,6 +63,7 @@ public class DashboardFragment extends Fragment {
         tvUniqueTags = view.findViewById(R.id.tv_unique_tags);
         btnScan = view.findViewById(R.id.btn_scan);
         btnClear = view.findViewById(R.id.btn_clear);
+        btnDownloadCsv = view.findViewById(R.id.btn_download_csv);
         feedList = view.findViewById(R.id.feed_list);
         statusDot = view.findViewById(R.id.v_status_dot);
         tvSendStatus = view.findViewById(R.id.tv_send_status);
@@ -68,8 +73,11 @@ public class DashboardFragment extends Fragment {
 
         btnScan.setOnClickListener(v -> onScanClick());
         btnClear.setOnClickListener(v -> clearReads());
+        btnDownloadCsv.setOnClickListener(v -> shareCsv());
 
         updateScanButton(false);
+
+        timerHandler.post(timerRunnable);
 
         WiclaxClient wc = WiclaxClient.getInstance();
         wc.addListener((connected, info) -> {
@@ -114,7 +122,6 @@ public class DashboardFragment extends Fragment {
             // STOP
             session.stop();
             uhf.stopInventory();
-            timerHandler.removeCallbacks(timerRunnable);
             updateScanButton(false);
         } else {
             // START – re-set the callback because stopInventory() clears it
@@ -126,7 +133,6 @@ public class DashboardFragment extends Fragment {
             uhf.setTagCallback(this::onTagRead);
             session.start();
             if (uhf.startInventory()) {
-                timerHandler.post(timerRunnable);
                 updateScanButton(true);
             }
         }
@@ -152,7 +158,6 @@ public class DashboardFragment extends Fragment {
         if (session.isScanning()) {
             session.stop();
             uhf.stopInventory();
-            timerHandler.removeCallbacks(timerRunnable);
             updateScanButton(false);
         }
         recentReads.clear();
@@ -160,7 +165,6 @@ public class DashboardFragment extends Fragment {
         session.reset();
         tvTotalReads.setText("0");
         tvUniqueTags.setText("0");
-        tvTimer.setText("--:--:--");
     }
 
     private void updateScanButton(boolean scanning) {
@@ -182,6 +186,20 @@ public class DashboardFragment extends Fragment {
                 toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 60);
             }
         } catch (Exception ignored) {}
+    }
+
+    private void shareCsv() {
+        File file = new File(FileUtils.getDailyFileName());
+        if (!file.exists()) {
+            Toast.makeText(getContext(), R.string.no_csv_today, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Uri uri = FileProvider.getUriForFile(requireContext(), requireContext().getPackageName() + ".fileprovider", file);
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/csv");
+        intent.putExtra(Intent.EXTRA_STREAM, uri);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(intent, getString(R.string.download_csv)));
     }
 
     private void renderFeed() {

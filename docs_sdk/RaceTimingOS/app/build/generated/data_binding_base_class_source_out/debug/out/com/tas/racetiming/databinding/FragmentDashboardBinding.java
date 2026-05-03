@@ -25,6 +25,9 @@ public final class FragmentDashboardBinding implements ViewBinding {
   public final Button btnClear;
 
   @NonNull
+  public final Button btnDownloadCsv;
+
+  @NonNull
   public final Button btnScan;
 
   @NonNull
@@ -55,13 +58,14 @@ public final class FragmentDashboardBinding implements ViewBinding {
   public final View vStatusDot;
 
   private FragmentDashboardBinding(@NonNull FrameLayout rootView, @NonNull Button btnClear,
-      @NonNull Button btnScan, @NonNull LinearLayout cardTotalReads,
+      @NonNull Button btnDownloadCsv, @NonNull Button btnScan, @NonNull LinearLayout cardTotalReads,
       @NonNull LinearLayout cardUniqueTags, @NonNull LinearLayout feedList,
       @NonNull TextView tvSendCounts, @NonNull TextView tvSendStatus,
       @NonNull TextView tvSessionTimer, @NonNull TextView tvTotalReads,
       @NonNull TextView tvUniqueTags, @NonNull View vStatusDot) {
     this.rootView = rootView;
     this.btnClear = btnClear;
+    this.btnDownloadCsv = btnDownloadCsv;
     this.btnScan = btnScan;
     this.cardTotalReads = cardTotalReads;
     this.cardUniqueTags = cardUniqueTags;
@@ -104,6 +108,12 @@ public final class FragmentDashboardBinding implements ViewBinding {
       id = R.id.btn_clear;
       Button btnClear = ViewBindings.findChildViewById(rootView, id);
       if (btnClear == null) {
+        break missingId;
+      }
+
+      id = R.id.btn_download_csv;
+      Button btnDownloadCsv = ViewBindings.findChildViewById(rootView, id);
+      if (btnDownloadCsv == null) {
         break missingId;
       }
 
@@ -167,9 +177,9 @@ public final class FragmentDashboardBinding implements ViewBinding {
         break missingId;
       }
 
-      return new FragmentDashboardBinding((FrameLayout) rootView, btnClear, btnScan, cardTotalReads,
-          cardUniqueTags, feedList, tvSendCounts, tvSendStatus, tvSessionTimer, tvTotalReads,
-          tvUniqueTags, vStatusDot);
+      return new FragmentDashboardBinding((FrameLayout) rootView, btnClear, btnDownloadCsv, btnScan,
+          cardTotalReads, cardUniqueTags, feedList, tvSendCounts, tvSendStatus, tvSessionTimer,
+          tvTotalReads, tvUniqueTags, vStatusDot);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

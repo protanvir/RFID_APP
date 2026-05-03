@@ -1,9 +1,20 @@
 -- Merging decision tree log ---
+provider#androidx.core.content.FileProvider
+INJECTED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:35:9-43:20
+	android:grantUriPermissions
+		ADDED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:39:13-47
+	android:authorities
+		INJECTED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml
+		ADDED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:37:13-64
+	android:exported
+		ADDED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:38:13-37
+	android:name
+		ADDED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:36:13-62
 manifest
-ADDED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:2:1-36:12
-INJECTED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:2:1-36:12
-INJECTED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:2:1-36:12
-INJECTED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:2:1-36:12
+ADDED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:2:1-46:12
+INJECTED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:2:1-46:12
+INJECTED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:2:1-46:12
+INJECTED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:2:1-46:12
 MERGED from [DeviceAPI_ver20251103_release.aar] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\de66d7eba76ad6270d702d046145b127\transformed\DeviceAPI_ver20251103_release\AndroidManifest.xml:2:1-17:12
 MERGED from [androidx.databinding:viewbinding:8.2.2] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d1d85e86a412f309cd716f5f34731cf\transformed\viewbinding-8.2.2\AndroidManifest.xml:2:1-7:12
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\901bea8934a37070ec38e6eb501e75cf\transformed\material-1.12.0\AndroidManifest.xml:17:1-24:12
@@ -78,8 +89,8 @@ ADDED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:8:5-82
 	android:name
 		ADDED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:8:22-79
 application
-ADDED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:10:5-34:19
-INJECTED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:10:5-34:19
+ADDED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:10:5-44:19
+INJECTED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:10:5-44:19
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\901bea8934a37070ec38e6eb501e75cf\transformed\material-1.12.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.12.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\901bea8934a37070ec38e6eb501e75cf\transformed\material-1.12.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:2.1.4] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\1f371f754bd6786f9a76f8e2fd18482b\transformed\constraintlayout-2.1.4\AndroidManifest.xml:9:5-20
@@ -142,6 +153,12 @@ ADDED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:29:9-33
 		ADDED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:32:13-87
 	android:name
 		ADDED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:30:13-41
+meta-data#android.support.FILE_PROVIDER_PATHS
+ADDED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:40:13-42:54
+	android:resource
+		ADDED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:42:17-51
+	android:name
+		ADDED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:41:17-67
 uses-sdk
 INJECTED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml

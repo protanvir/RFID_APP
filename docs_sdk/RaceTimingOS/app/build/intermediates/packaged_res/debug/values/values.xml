@@ -59,6 +59,7 @@
     <string name="clear_reads">CLEAR</string>
     <string name="dbm">dBm</string>
     <string name="device_id">DEVICE ID</string>
+    <string name="download_csv">DOWNLOAD CSV</string>
     <string name="elapsed_session_time">ELAPSED SESSION TIME</string>
     <string name="epc_prefix_filtering">EPC PREFIX FILTERING</string>
     <string name="external_server_config">EXTERNAL SERVER CONFIG</string>
@@ -70,6 +71,7 @@
     <string name="medium_power">MEDIUM POWER</string>
     <string name="module_status_active">MODULE STATUS: ACTIVE</string>
     <string name="module_temp">MODULE TEMP</string>
+    <string name="no_csv_today">No CSV data for today</string>
     <string name="off">Off</string>
     <string name="optimal">OPTIMAL</string>
     <string name="platform">PLATFORM</string>

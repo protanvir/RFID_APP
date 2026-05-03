@@ -10,6 +10,7 @@ import com.rscja.deviceapi.RFIDWithUHFUART;
 import com.rscja.deviceapi.entity.InventoryParameter;
 import com.rscja.deviceapi.entity.UHFTAGInfo;
 import com.rscja.deviceapi.interfaces.IUHFInventoryCallback;
+import com.rscja.utility.BatteryUtils;
 
 public class UHFManager {
     private static final String TAG = "UHFManager";
@@ -153,6 +154,22 @@ public class UHFManager {
     }
 
     public int getBatteryPercentage() {
+        return -1;
+    }
+
+    public int getTemperature() {
+        try {
+            if (reader != null && isInitialized) {
+                return reader.getTemperature();
+            }
+        } catch (Exception ignored) {}
+        return Integer.MIN_VALUE;
+    }
+
+    public int getBatteryHealth() {
+        try {
+            return BatteryUtils.getBatteryHealth();
+        } catch (Exception ignored) {}
         return -1;
     }
 }

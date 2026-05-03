@@ -63,6 +63,7 @@ drawable status_dot_red
 drawable tas_logo
 drawable ticon
 id btn_clear
+id btn_download_csv
 id btn_save
 id btn_scan
 id btn_settings
@@ -107,6 +108,7 @@ string celsius
 string clear_reads
 string dbm
 string device_id
+string download_csv
 string elapsed_session_time
 string epc_prefix_filtering
 string external_server_config
@@ -118,6 +120,7 @@ string low_power
 string medium_power
 string module_status_active
 string module_temp
+string no_csv_today
 string off
 string optimal
 string platform
@@ -149,4 +152,5 @@ style Theme.RaceTimingOS
 style Theme.RaceTimingOS.Splash
 xml backup_rules
 xml data_extraction_rules
+xml file_paths
 xml network_security_config

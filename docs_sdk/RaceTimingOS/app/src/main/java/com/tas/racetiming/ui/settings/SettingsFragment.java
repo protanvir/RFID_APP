@@ -2,6 +2,7 @@ package com.tas.racetiming.ui.settings;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,6 +35,16 @@ public class SettingsFragment extends Fragment {
     private View statusDot;
     private Button btnSave;
 
+    private TextView tvModuleTemp, tvBatteryHealth;
+    private final Handler hwHandler = new Handler();
+    private final Runnable hwRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateHardwareMonitor();
+            hwHandler.postDelayed(this, 5000);
+        }
+    };
+
     private WiclaxClient.WiclaxListener wiclaxListener;
 
     @Override
@@ -52,6 +63,9 @@ public class SettingsFragment extends Fragment {
         tvConnectionStatus = view.findViewById(R.id.tv_connection_status);
         statusDot = view.findViewById(R.id.tv_status_dot);
         btnSave = view.findViewById(R.id.btn_save);
+
+        tvModuleTemp = view.findViewById(R.id.tv_module_temp);
+        tvBatteryHealth = view.findViewById(R.id.tv_battery_health);
 
         loadPrefs();
 
@@ -84,7 +98,6 @@ public class SettingsFragment extends Fragment {
             Toast.makeText(getContext(), "Settings saved", Toast.LENGTH_SHORT).show();
         });
 
-        // Listen for Wiclax connection status
         wiclaxListener = (connected, info) -> {
             statusDot.setBackgroundResource(connected
                     ? R.drawable.status_dot_green : R.drawable.status_dot_red);
@@ -92,10 +105,26 @@ public class SettingsFragment extends Fragment {
         };
         WiclaxClient wc = WiclaxClient.getInstance();
         wc.addListener(wiclaxListener);
-        // Apply current state immediately
         wiclaxListener.onStatusChanged(wc.isConnected(), wc.getCurrentStatus());
 
+        updateHardwareMonitor();
+        hwHandler.postDelayed(hwRunnable, 5000);
+
         return view;
+    }
+
+    private void updateHardwareMonitor() {
+        UHFManager uhf = UHFManager.getInstance();
+
+        int temp = uhf.getTemperature();
+        if (temp != Integer.MIN_VALUE) {
+            tvModuleTemp.setText(String.valueOf(temp));
+        }
+
+        int batt = uhf.getBatteryHealth();
+        if (batt >= 0) {
+            tvBatteryHealth.setText(batt + "%");
+        }
     }
 
     private void updatePowerLabel(int level) {
@@ -143,6 +172,7 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        hwHandler.removeCallbacks(hwRunnable);
         savePrefs();
         if (wiclaxListener != null) {
             WiclaxClient.getInstance().removeListener(wiclaxListener);
