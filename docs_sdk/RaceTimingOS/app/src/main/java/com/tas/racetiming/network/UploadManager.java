@@ -6,8 +6,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.tas.racetiming.network.RufusClient;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -21,26 +19,25 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class UploadManager {
     private static final String TAG = "UploadManager";
     private static final String BASE_DIR = Environment.getExternalStorageDirectory().getAbsolutePath() + "/racetiming/";
     private static final String PENDING_FILE = "pending.csv";
-    private static final String PREFS_NAME = "tas_timer_settings";
     private static final String KEY_CURSOR = "upload_cursor";
-    private static final long INTERVAL_MS = 3000;
+    private static final long INTERVAL_MS = 1000;
 
     private static UploadManager instance;
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor(r -> new Thread(r, "UploadMgr"));
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "UploadMgr"));
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final CopyOnWriteArrayList<UploadListener> listeners = new CopyOnWriteArrayList<>();
 
     private SharedPreferences prefs;
     private boolean running = false;
-    private final Runnable cycle = this::runCycle;
 
     public interface UploadListener {
         void onStatus(String platform, int sent, int failed, int pending);
@@ -70,48 +67,41 @@ public class UploadManager {
     public void start() {
         if (running) return;
         running = true;
-        executor.execute(this::runCycle);
+        scheduler.scheduleWithFixedDelay(this::runCycle, 0, INTERVAL_MS, TimeUnit.MILLISECONDS);
     }
 
     public void stop() {
         running = false;
-        mainHandler.removeCallbacks(cycle);
     }
 
-    // Called from tag read — always queues to file
     public void enqueue(String epc, String rssi) {
-        executor.execute(() -> {
+        scheduler.execute(() -> {
             try {
                 File dir = new File(BASE_DIR);
                 if (!dir.exists()) dir.mkdirs();
                 File file = new File(dir, PENDING_FILE);
-
                 String ts = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.SSS", Locale.US).format(new Date());
                 String line = epc + ";" + ts + ";" + rssi + "\r\n";
-
                 FileOutputStream fos = new FileOutputStream(file, true);
                 fos.write(line.getBytes(StandardCharsets.UTF_8));
                 fos.close();
-
-                notifyStatus();
             } catch (Exception e) {
                 Log.e(TAG, "enqueue error: " + e.getMessage());
             }
+            notifyStatus();
         });
     }
 
     public int pendingCount() {
         File f = new File(BASE_DIR + PENDING_FILE);
         if (!f.exists()) return 0;
+        int cursor = prefs != null ? prefs.getInt(KEY_CURSOR, 0) : 0;
         int lines = 0;
         try (BufferedReader r = new BufferedReader(new FileReader(f))) {
             while (r.readLine() != null) lines++;
         } catch (Exception ignored) {}
-        int cursor = prefs != null ? prefs.getInt(KEY_CURSOR, 0) : 0;
         return Math.max(0, lines - cursor);
     }
-
-    // --- internal ---
 
     private void runCycle() {
         if (!running || prefs == null) return;
@@ -119,9 +109,6 @@ public class UploadManager {
             processBatch();
         } catch (Exception e) {
             Log.e(TAG, "cycle error: " + e.getMessage());
-        }
-        if (running) {
-            mainHandler.postDelayed(cycle, INTERVAL_MS);
         }
     }
 
@@ -151,22 +138,9 @@ public class UploadManager {
                     prefs.edit().putInt(KEY_CURSOR, cursor).apply();
                 } else {
                     totalFailed++;
-                    break; // stop on first failure, retry next cycle
+                    break;
                 }
                 idx++;
-            }
-
-            // If all lines processed, clean up
-            if (cursor > 0 && br.read() == -1) {
-                // File is fully consumed
-            }
-            br.close();
-
-            // Check if we've processed everything
-            int totalLines = countLines(f);
-            if (cursor >= totalLines && totalLines > 0) {
-                f.delete();
-                prefs.edit().putInt(KEY_CURSOR, 0).apply();
             }
         } catch (Exception e) {
             Log.e(TAG, "processBatch error: " + e.getMessage());
@@ -176,7 +150,13 @@ public class UploadManager {
             notifyStatus();
         }
 
-        // If Rufus session is closing, close it once queue is empty
+        int totalLines = countLines(f);
+        if (cursor >= totalLines && totalLines > 0) {
+            f.delete();
+            prefs.edit().putInt(KEY_CURSOR, 0).apply();
+            notifyStatus();
+        }
+
         RufusClient rc = RufusClient.getInstance();
         if (rc.isCloseScheduled() && pendingCount() == 0) {
             rc.doFinalClose();
@@ -185,13 +165,9 @@ public class UploadManager {
 
     private boolean sendToPlatform(String epc, String rssi) {
         String platform = prefs.getString("selected_platform", "off");
-        if ("off".equals(platform)) return true; // nothing to send, mark as done
-
-        if ("wiclax".equals(platform)) {
-            return sendWiclax(epc);
-        } else if ("rufus".equals(platform)) {
-            return sendRufus(epc);
-        }
+        if ("off".equals(platform)) return true;
+        if ("wiclax".equals(platform)) return sendWiclax(epc);
+        if ("rufus".equals(platform)) return sendRufus(epc);
         return true;
     }
 
@@ -206,7 +182,6 @@ public class UploadManager {
         String fullUrl = url + "?user=" + URLEncoder.encode(user)
                 + "&deviceId=" + URLEncoder.encode(deviceId)
                 + "&passings=" + URLEncoder.encode(passingData);
-
         try {
             HttpURLConnection conn = (HttpURLConnection) new URL(fullUrl).openConnection();
             conn.setRequestMethod("GET");
@@ -214,9 +189,10 @@ public class UploadManager {
             conn.setReadTimeout(8000);
             int code = conn.getResponseCode();
             conn.disconnect();
+            Log.i(TAG, "Wiclax code=" + code + " epc=" + epc);
             return code >= 200 && code < 300;
         } catch (Exception e) {
-            Log.w(TAG, "Wiclax send fail: " + e.getMessage());
+            Log.w(TAG, "Wiclax fail: " + e.getMessage());
             return false;
         }
     }
@@ -224,7 +200,8 @@ public class UploadManager {
     private boolean sendRufus(String epc) {
         String apiKey = prefs.getString("rufus_api_key", "");
         String tokenSession = RufusClient.getInstance().getTokenSession();
-        if (apiKey.isEmpty() || tokenSession == null) return false;
+        if (apiKey.isEmpty()) { Log.w(TAG, "Rufus skip: no api key"); return false; }
+        if (tokenSession == null) { Log.w(TAG, "Rufus skip: no session"); return false; }
 
         try {
             org.json.JSONObject passing = new org.json.JSONObject();
@@ -257,10 +234,14 @@ public class UploadManager {
             os.close();
 
             int code = conn.getResponseCode();
+            String resp = code >= 200 && code < 300 ?
+                new String(readAll(conn.getInputStream()), "UTF-8") :
+                (conn.getErrorStream() != null ? new String(readAll(conn.getErrorStream()), "UTF-8") : "");
             conn.disconnect();
+            Log.i(TAG, "Rufus POST code=" + code + " epc=" + epc + " resp=" + resp);
             return code >= 200 && code < 300;
         } catch (Exception e) {
-            Log.w(TAG, "Rufus send fail: " + e.getMessage());
+            Log.w(TAG, "Rufus fail: " + e.getMessage());
             return false;
         }
     }
@@ -273,10 +254,18 @@ public class UploadManager {
         return n;
     }
 
+    private byte[] readAll(java.io.InputStream is) throws Exception {
+        java.io.ByteArrayOutputStream buf = new java.io.ByteArrayOutputStream();
+        byte[] tmp = new byte[4096];
+        int n;
+        while ((n = is.read(tmp)) != -1) buf.write(tmp, 0, n);
+        return buf.toByteArray();
+    }
+
     private void notifyStatus() {
         int pending = pendingCount();
+        String platform = prefs != null ? prefs.getString("selected_platform", "off") : "off";
         mainHandler.post(() -> {
-            String platform = prefs != null ? prefs.getString("selected_platform", "off") : "off";
             for (UploadListener l : listeners) l.onStatus(platform, 0, 0, pending);
         });
     }
