@@ -130,7 +130,19 @@ public class DashboardFragment extends Fragment {
             session.start();
 
             if ("rufus".equals(getPlatform())) {
-                RufusClient.getInstance().startSession(new RufusClient.SessionCallback() {
+                RufusClient rc = RufusClient.getInstance();
+                SharedPreferences p = requireActivity().getSharedPreferences("tas_timer_settings", 0);
+                if (!rc.isConfigured()) {
+                    rc.configure(
+                        p.getString("rufus_api_key", ""),
+                        p.getString("rufus_serial", ""),
+                        p.getString("rufus_alias", ""));
+                    String cachedDeviceId = p.getString("rufus_device_id", null);
+                    if (cachedDeviceId != null && !cachedDeviceId.isEmpty()) {
+                        rc.setDeviceId(cachedDeviceId);
+                    }
+                }
+                rc.startSession(new RufusClient.SessionCallback() {
                     @Override public void onReady() {}
                     @Override public void onError(String msg) {
                         Toast.makeText(getContext(), "Rufus: " + msg, Toast.LENGTH_SHORT).show();

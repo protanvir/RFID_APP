@@ -22,9 +22,9 @@ public class RufusClient {
     private static final String DEFAULT_URL = "https://api.runonrufus.com/v0";
     private static RufusClient instance;
 
-    private String apiKey;
-    private String serialNumber;
-    private String alias;
+    private String apiKey = "";
+    private String serialNumber = "";
+    private String alias = "";
     private String serverUrl = DEFAULT_URL;
     private String deviceId;
     private String tokenSession;
@@ -244,6 +244,11 @@ public class RufusClient {
 
     public void startSession(SessionCallback callback) {
         this.pendingCallback = callback;
+        if (!configured) {
+            setStatus("Not configured");
+            notifySessionError("API key or serial not configured");
+            return;
+        }
         if (deviceId == null) {
             setStatus("Binding…");
             ioExecutor.execute(() -> {
