@@ -125,25 +125,19 @@ public class DashboardFragment extends Fragment {
             uhf.setTagCallback(this::onTagRead);
             session.start();
 
-            String platform = getPlatform();
-            if ("rufus".equals(platform)) {
+            if ("rufus".equals(getPlatform())) {
                 RufusClient rc = RufusClient.getInstance();
                 rc.startSession(new RufusClient.SessionCallback() {
                     @Override
-                    public void onReady() {
-                        if (uhf.startInventory()) {
-                            updateScanButton(true);
-                        }
-                    }
+                    public void onReady() {}
                     @Override
                     public void onError(String message) {
                         Toast.makeText(getContext(), "Rufus: " + message, Toast.LENGTH_SHORT).show();
                     }
                 });
-            } else {
-                if (uhf.startInventory()) {
-                    updateScanButton(true);
-                }
+            }
+            if (uhf.startInventory()) {
+                updateScanButton(true);
             }
         }
     }
