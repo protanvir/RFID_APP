@@ -183,7 +183,7 @@ public class DashboardFragment extends Fragment {
 
     private String getPlatform() {
         SharedPreferences p = requireActivity().getSharedPreferences("tas_timer_settings", 0);
-        return p.getString("platform", "off");
+        return p.getString("selected_platform", "off");
     }
 
     private void clearReads() {

@@ -29,7 +29,7 @@ public class SettingsFragment extends Fragment {
 
     private static final String PREFS_NAME = "tas_timer_settings";
 
-    private static final String KEY_PLATFORM = "platform";
+    private static final String KEY_PLATFORM = "selected_platform";
     private static final String KEY_RUFUS_API_KEY = "rufus_api_key";
     private static final String KEY_RUFUS_SERIAL = "rufus_serial";
     private static final String KEY_RUFUS_ALIAS = "rufus_alias";
