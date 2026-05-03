@@ -1,6 +1,7 @@
 package com.tas.racetiming.ui.settings;
 
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
@@ -8,6 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,6 +18,7 @@ import android.widget.Toast;
 import androidx.fragment.app.Fragment;
 
 import com.tas.racetiming.R;
+import com.tas.racetiming.network.RufusClient;
 import com.tas.racetiming.network.WiclaxClient;
 import com.tas.racetiming.uhf.UHFManager;
 
@@ -25,15 +29,28 @@ public class SettingsFragment extends Fragment {
 
     private static final String PREFS_NAME = "tas_timer_settings";
 
+    private static final String KEY_PLATFORM = "platform";
+    private static final String KEY_RUFUS_API_KEY = "rufus_api_key";
+    private static final String KEY_RUFUS_SERIAL = "rufus_serial";
+    private static final String KEY_RUFUS_ALIAS = "rufus_alias";
+    private static final String KEY_RUFUS_DEVICE_ID = "rufus_device_id";
+
     private SeekBar sbPower;
     private TextView tvPowerValue, tvPowerLabel;
     private androidx.appcompat.widget.SwitchCompat switchEpc;
     private EditText etEpcPrefix;
 
+    private RadioGroup rgPlatform;
+    private View wiclaxSection, rufusSection;
+
     private EditText etServerUrl, etUser, etDeviceId;
     private TextView tvConnectionStatus;
     private View statusDot;
     private Button btnSave;
+
+    private EditText etRufusApiKey, etRufusSerial, etRufusAlias;
+    private TextView tvRufusStatus;
+    private View rufusStatusDot;
 
     private TextView tvModuleTemp, tvBatteryHealth;
     private final Handler hwHandler = new Handler();
@@ -46,6 +63,7 @@ public class SettingsFragment extends Fragment {
     };
 
     private WiclaxClient.WiclaxListener wiclaxListener;
+    private RufusClient.RufusListener rufusListener;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -57,6 +75,10 @@ public class SettingsFragment extends Fragment {
         switchEpc = view.findViewById(R.id.switch_epc_filter);
         etEpcPrefix = view.findViewById(R.id.et_epc_prefix);
 
+        rgPlatform = view.findViewById(R.id.rg_platform);
+        wiclaxSection = view.findViewById(R.id.wiclax_config_section);
+        rufusSection = view.findViewById(R.id.rufus_config_section);
+
         etServerUrl = view.findViewById(R.id.et_server_url);
         etUser = view.findViewById(R.id.et_user);
         etDeviceId = view.findViewById(R.id.et_device_id);
@@ -64,12 +86,23 @@ public class SettingsFragment extends Fragment {
         statusDot = view.findViewById(R.id.tv_status_dot);
         btnSave = view.findViewById(R.id.btn_save);
 
+        etRufusApiKey = view.findViewById(R.id.et_rufus_api_key);
+        etRufusSerial = view.findViewById(R.id.et_rufus_serial);
+        etRufusAlias = view.findViewById(R.id.et_rufus_alias);
+        tvRufusStatus = view.findViewById(R.id.tv_rufus_status);
+        rufusStatusDot = view.findViewById(R.id.tv_rufus_status_dot);
+
         tvModuleTemp = view.findViewById(R.id.tv_module_temp);
         tvBatteryHealth = view.findViewById(R.id.tv_battery_health);
 
         loadPrefs();
 
         UHFManager uhf = UHFManager.getInstance();
+
+        rgPlatform.setOnCheckedChangeListener((group, checkedId) -> {
+            updateSectionVisibility(checkedId);
+            savePrefs();
+        });
 
         sbPower.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -87,14 +120,16 @@ public class SettingsFragment extends Fragment {
             savePrefs();
         });
 
-        List<EditText> textFields = Arrays.asList(etEpcPrefix, etServerUrl, etUser, etDeviceId);
-        for (EditText et : textFields) {
+        List<EditText> autoSaveFields = Arrays.asList(etEpcPrefix, etServerUrl, etUser, etDeviceId,
+                etRufusApiKey, etRufusSerial, etRufusAlias);
+        for (EditText et : autoSaveFields) {
             et.setOnFocusChangeListener((v, hasFocus) -> { if (!hasFocus) savePrefs(); });
         }
 
         btnSave.setOnClickListener(v -> {
             savePrefs();
             reconfigureWiclax();
+            reconfigureRufus();
             Toast.makeText(getContext(), "Settings saved", Toast.LENGTH_SHORT).show();
         });
 
@@ -107,20 +142,42 @@ public class SettingsFragment extends Fragment {
         wc.addListener(wiclaxListener);
         wiclaxListener.onStatusChanged(wc.isConnected(), wc.getCurrentStatus());
 
+        rufusListener = status -> {
+            tvRufusStatus.setText(status);
+            boolean ok = !status.contains("error") && !status.contains("fail") && !status.contains("No")
+                    && !status.contains("Not");
+            rufusStatusDot.setBackgroundResource(ok
+                    ? R.drawable.status_dot_green : R.drawable.status_dot_red);
+        };
+        RufusClient rc = RufusClient.getInstance();
+        rc.addListener(rufusListener);
+        rufusListener.onStatusChanged(rc.getStatus());
+
         updateHardwareMonitor();
         hwHandler.postDelayed(hwRunnable, 5000);
 
         return view;
     }
 
+    private void updateSectionVisibility(int checkedId) {
+        if (checkedId == R.id.rb_platform_wiclax) {
+            wiclaxSection.setVisibility(View.VISIBLE);
+            rufusSection.setVisibility(View.GONE);
+        } else if (checkedId == R.id.rb_platform_rufus) {
+            wiclaxSection.setVisibility(View.GONE);
+            rufusSection.setVisibility(View.VISIBLE);
+        } else {
+            wiclaxSection.setVisibility(View.GONE);
+            rufusSection.setVisibility(View.GONE);
+        }
+    }
+
     private void updateHardwareMonitor() {
         UHFManager uhf = UHFManager.getInstance();
-
         int temp = uhf.getTemperature();
         if (temp != Integer.MIN_VALUE) {
             tvModuleTemp.setText(String.valueOf(temp));
         }
-
         int batt = uhf.getBatteryHealth();
         if (batt >= 0) {
             tvBatteryHealth.setText(batt + "%");
@@ -146,14 +203,29 @@ public class SettingsFragment extends Fragment {
                 etDeviceId.getText().toString().trim());
     }
 
+    private void reconfigureRufus() {
+        String key = etRufusApiKey.getText().toString().trim();
+        String sn = etRufusSerial.getText().toString().trim();
+        String alias = etRufusAlias.getText().toString().trim();
+        RufusClient.getInstance().configure(key, sn, alias);
+    }
+
     private void savePrefs() {
+        int checkedId = rgPlatform.getCheckedRadioButtonId();
+        String platform = checkedId == R.id.rb_platform_wiclax ? "wiclax"
+                : checkedId == R.id.rb_platform_rufus ? "rufus" : "off";
+
         getPrefs().edit()
+                .putString(KEY_PLATFORM, platform)
                 .putInt("power", sbPower.getProgress())
                 .putBoolean("epc_filter", switchEpc.isChecked())
                 .putString("epc_prefix", etEpcPrefix.getText().toString())
                 .putString("server_url", etServerUrl.getText().toString())
                 .putString("user", etUser.getText().toString())
                 .putString("device_id", etDeviceId.getText().toString())
+                .putString(KEY_RUFUS_API_KEY, etRufusApiKey.getText().toString())
+                .putString(KEY_RUFUS_SERIAL, etRufusSerial.getText().toString())
+                .putString(KEY_RUFUS_ALIAS, etRufusAlias.getText().toString())
                 .apply();
     }
 
@@ -167,6 +239,41 @@ public class SettingsFragment extends Fragment {
         etUser.setText(p.getString("user", ""));
         etDeviceId.setText(p.getString("device_id", "C72-SN-001"));
         UHFManager.getInstance().setPower(p.getInt("power", 26));
+
+        String platform = p.getString(KEY_PLATFORM, "off");
+        int checkedId;
+        switch (platform) {
+            case "wiclax": checkedId = R.id.rb_platform_wiclax; break;
+            case "rufus":  checkedId = R.id.rb_platform_rufus;  break;
+            default:       checkedId = R.id.rb_platform_off;    break;
+        }
+        rgPlatform.check(checkedId);
+        updateSectionVisibility(checkedId);
+
+        etRufusApiKey.setText(p.getString(KEY_RUFUS_API_KEY, ""));
+        String defaultSn = p.getString(KEY_RUFUS_SERIAL, "");
+        if (defaultSn.isEmpty()) {
+            defaultSn = Build.SERIAL != null && !Build.SERIAL.equals("unknown")
+                    ? Build.SERIAL : "C72-SN-001";
+        }
+        etRufusSerial.setText(defaultSn);
+        String defaultAlias = p.getString(KEY_RUFUS_ALIAS, "");
+        if (defaultAlias.isEmpty()) {
+            defaultAlias = "C72-UHF-" + defaultSn;
+        }
+        etRufusAlias.setText(defaultAlias);
+
+        String cachedDeviceId = p.getString(KEY_RUFUS_DEVICE_ID, null);
+        RufusClient rc = RufusClient.getInstance();
+        if (cachedDeviceId != null && !cachedDeviceId.isEmpty()) {
+            rc.setDeviceId(cachedDeviceId);
+        }
+        reconfigureRufus();
+
+        WiclaxClient.getInstance().configure(
+                p.getString("server_url", "http://wiclax.com:35014"),
+                p.getString("user", ""),
+                p.getString("device_id", "C72-SN-001"));
     }
 
     @Override
@@ -174,8 +281,17 @@ public class SettingsFragment extends Fragment {
         super.onDestroyView();
         hwHandler.removeCallbacks(hwRunnable);
         savePrefs();
+
+        String deviceId = RufusClient.getInstance().getDeviceId();
+        if (deviceId != null) {
+            getPrefs().edit().putString(KEY_RUFUS_DEVICE_ID, deviceId).apply();
+        }
+
         if (wiclaxListener != null) {
             WiclaxClient.getInstance().removeListener(wiclaxListener);
+        }
+        if (rufusListener != null) {
+            RufusClient.getInstance().removeListener(rufusListener);
         }
     }
 }

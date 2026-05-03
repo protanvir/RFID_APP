@@ -1,6 +1,7 @@
 package com.tas.racetiming.ui.dashboard;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.net.Uri;
@@ -22,6 +23,7 @@ import androidx.fragment.app.Fragment;
 import com.tas.racetiming.R;
 import com.tas.racetiming.model.SessionData;
 import com.tas.racetiming.model.TagRead;
+import com.tas.racetiming.network.RufusClient;
 import com.tas.racetiming.network.WiclaxClient;
 import com.tas.racetiming.tools.FileUtils;
 import com.tas.racetiming.uhf.UHFManager;
@@ -122,6 +124,9 @@ public class DashboardFragment extends Fragment {
             // STOP
             session.stop();
             uhf.stopInventory();
+            if ("rufus".equals(getPlatform())) {
+                RufusClient.getInstance().closeSession();
+            }
             updateScanButton(false);
         } else {
             // START – re-set the callback because stopInventory() clears it
@@ -132,8 +137,26 @@ public class DashboardFragment extends Fragment {
             }
             uhf.setTagCallback(this::onTagRead);
             session.start();
-            if (uhf.startInventory()) {
-                updateScanButton(true);
+
+            String platform = getPlatform();
+            if ("rufus".equals(platform)) {
+                RufusClient rc = RufusClient.getInstance();
+                rc.startSession(new RufusClient.SessionCallback() {
+                    @Override
+                    public void onReady() {
+                        if (uhf.startInventory()) {
+                            updateScanButton(true);
+                        }
+                    }
+                    @Override
+                    public void onError(String message) {
+                        Toast.makeText(getContext(), "Rufus: " + message, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } else {
+                if (uhf.startInventory()) {
+                    updateScanButton(true);
+                }
             }
         }
     }
@@ -148,9 +171,19 @@ public class DashboardFragment extends Fragment {
         renderFeed();
         playBeep();
         FileUtils.writeTagToCsv(epc, rssi);
-        Log.i("TAG_READ", "sending to Wiclax...");
-        WiclaxClient.getInstance().sendPassing(epc, rssi);
-        Log.i("TAG_READ", "sendPassing returned");
+        String platform = getPlatform();
+        if ("rufus".equals(platform)) {
+            Log.i("TAG_READ", "sending to Rufus...");
+            RufusClient.getInstance().sendPassing(epc);
+        } else if ("wiclax".equals(platform)) {
+            Log.i("TAG_READ", "sending to Wiclax...");
+            WiclaxClient.getInstance().sendPassing(epc, rssi);
+        }
+    }
+
+    private String getPlatform() {
+        SharedPreferences p = requireActivity().getSharedPreferences("tas_timer_settings", 0);
+        return p.getString("platform", "off");
     }
 
     private void clearReads() {
@@ -158,6 +191,9 @@ public class DashboardFragment extends Fragment {
         if (session.isScanning()) {
             session.stop();
             uhf.stopInventory();
+            if ("rufus".equals(getPlatform())) {
+                RufusClient.getInstance().closeSession();
+            }
             updateScanButton(false);
         }
         recentReads.clear();
@@ -252,6 +288,7 @@ public class DashboardFragment extends Fragment {
             session.stop();
             uhf.stopInventory();
         }
+        RufusClient.getInstance().closeSession();
         timerHandler.removeCallbacks(timerRunnable);
         if (toneGenerator != null) {
             toneGenerator.release();

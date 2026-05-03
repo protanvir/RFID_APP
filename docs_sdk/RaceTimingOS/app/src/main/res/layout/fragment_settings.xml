@@ -131,7 +131,7 @@
                 android:layout_marginTop="@dimen/stack_sm"/>
         </LinearLayout>
 
-        <!-- External Server Config -->
+        <!-- Platform Selector -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -143,6 +143,60 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="@string/platform_label"
+                android:textColor="@color/outline"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="@dimen/stack_sm"/>
+
+            <RadioGroup
+                android:id="@+id/rg_platform"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/rb_platform_off"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/platform_off"
+                    android:textColor="@color/on_surface"
+                    android:checked="true"/>
+
+                <RadioButton
+                    android:id="@+id/rb_platform_wiclax"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/platform_wiclax"
+                    android:textColor="@color/on_surface"/>
+
+                <RadioButton
+                    android:id="@+id/rb_platform_rufus"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/platform_rufus"
+                    android:textColor="@color/on_surface"/>
+            </RadioGroup>
+        </LinearLayout>
+
+        <!-- Wiclax Config -->
+        <LinearLayout
+            android:id="@+id/wiclax_config_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/zinc_900"
+            android:padding="@dimen/gutter"
+            android:layout_marginBottom="@dimen/stack_md"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:text="@string/external_server_config"
                 android:textColor="@color/outline"
                 android:textSize="@dimen/label_caps_text_size"
@@ -150,7 +204,6 @@
                 android:letterSpacing="0.1"
                 android:layout_marginBottom="@dimen/stack_sm"/>
 
-            <!-- Wiclax connection status -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -174,7 +227,6 @@
                     android:textSize="@dimen/body_lg_text_size"/>
             </LinearLayout>
 
-            <!-- URL -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -198,7 +250,6 @@
                 android:hint="http://wiclax.com:35014"
                 android:layout_marginBottom="@dimen/stack_sm"/>
 
-            <!-- USER -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -222,7 +273,6 @@
                 android:hint="your_username"
                 android:layout_marginBottom="@dimen/stack_sm"/>
 
-            <!-- DEVICE ID -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -246,7 +296,6 @@
                 android:hint="C72-SN-001"
                 android:layout_marginBottom="@dimen/stack_sm"/>
 
-            <!-- Save button -->
             <Button
                 android:id="@+id/btn_save"
                 android:layout_width="match_parent"
@@ -258,6 +307,124 @@
                 android:backgroundTint="@color/primary_container"
                 android:textColor="@color/zinc_950"
                 style="@style/Widget.Material3.Button"/>
+        </LinearLayout>
+
+        <!-- Rufus Config -->
+        <LinearLayout
+            android:id="@+id/rufus_config_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/zinc_900"
+            android:padding="@dimen/gutter"
+            android:layout_marginBottom="@dimen/stack_md"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/rufus_config"
+                android:textColor="@color/outline"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="@dimen/stack_sm"/>
+
+            <!-- Rufus status -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="@dimen/stack_sm">
+
+                <TextView
+                    android:id="@+id/tv_rufus_status_dot"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:background="@drawable/status_dot_gray"
+                    android:layout_marginEnd="@dimen/base"/>
+
+                <TextView
+                    android:id="@+id/tv_rufus_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/rufus_ready"
+                    android:textColor="@color/on_surface"
+                    android:textSize="@dimen/body_lg_text_size"/>
+            </LinearLayout>
+
+            <!-- API Key -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/api_key"
+                android:textColor="@color/on_surface_variant"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="@dimen/base"/>
+
+            <EditText
+                android:id="@+id/et_rufus_api_key"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/touch_target_min"
+                android:inputType="textVisiblePassword"
+                android:paddingLeft="@dimen/gutter"
+                android:paddingRight="@dimen/gutter"
+                android:background="@color/surface_container_lowest"
+                android:textColor="@color/on_surface"
+                android:textSize="@dimen/body_lg_text_size"
+                android:hint="@string/rufus_api_key_hint"
+                android:layout_marginBottom="@dimen/stack_sm"/>
+
+            <!-- DEVICE SN -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/device_serial"
+                android:textColor="@color/on_surface_variant"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="@dimen/base"/>
+
+            <EditText
+                android:id="@+id/et_rufus_serial"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/touch_target_min"
+                android:inputType="text"
+                android:paddingLeft="@dimen/gutter"
+                android:paddingRight="@dimen/gutter"
+                android:background="@color/surface_container_lowest"
+                android:textColor="@color/on_surface"
+                android:textSize="@dimen/body_lg_text_size"
+                android:hint="C72-SN-001"
+                android:layout_marginBottom="@dimen/stack_sm"/>
+
+            <!-- ALIAS -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/device_alias"
+                android:textColor="@color/on_surface_variant"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="@dimen/base"/>
+
+            <EditText
+                android:id="@+id/et_rufus_alias"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/touch_target_min"
+                android:inputType="text"
+                android:paddingLeft="@dimen/gutter"
+                android:paddingRight="@dimen/gutter"
+                android:background="@color/surface_container_lowest"
+                android:textColor="@color/on_surface"
+                android:textSize="@dimen/body_lg_text_size"
+                android:hint="My C72 Timer"
+                android:layout_marginBottom="@dimen/stack_sm"/>
         </LinearLayout>
 
         <!-- Hardware Monitor -->

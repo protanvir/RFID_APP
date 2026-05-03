@@ -51,4 +51,23 @@
     <string name="stop_server">STOP SERVER</string>
     <string name="download_csv">DOWNLOAD CSV</string>
     <string name="no_csv_today">No CSV data for today</string>
+
+    <!-- Platform -->
+    <string name="platform_label">PLATFORM</string>
+    <string name="platform_off">Off</string>
+    <string name="platform_wiclax">Wiclax</string>
+    <string name="platform_rufus">Rufus</string>
+
+    <!-- Rufus -->
+    <string name="rufus_config">RUFUS CLOUD CONFIG</string>
+    <string name="rufus_api_key_hint">Enter your Rufus API key</string>
+    <string name="device_serial">DEVICE SN</string>
+    <string name="device_alias">DEVICE ALIAS</string>
+    <string name="rufus_status">Rufus Status</string>
+    <string name="rufus_ready">Ready</string>
+    <string name="rufus_binding">Binding device…</string>
+    <string name="rufus_creating_session">Creating session…</string>
+    <string name="rufus_sending">Sending…</string>
+    <string name="rufus_ok">OK</string>
+    <string name="rufus_error">Error</string>
 </resources>
