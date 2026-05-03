@@ -159,8 +159,9 @@ public class UploadManager {
             notifyStatus();
         }
 
+        // Close Rufus session when queue is empty
         RufusClient rc = RufusClient.getInstance();
-        if (rc.isCloseScheduled() && pendingCount() == 0) {
+        if (rc.getTokenSession() != null && pendingCount() == 0) {
             rc.doFinalClose();
         }
     }
@@ -169,7 +170,13 @@ public class UploadManager {
         String platform = prefs.getString("selected_platform", "off");
         if ("off".equals(platform)) return true;
         if ("wiclax".equals(platform)) return sendWiclax(epc);
-        if ("rufus".equals(platform)) return sendRufus(epc);
+        if ("rufus".equals(platform)) {
+            if (RufusClient.getInstance().getTokenSession() == null) {
+                RufusClient.getInstance().createSession();
+                return false; // will retry next cycle when session is ready
+            }
+            return sendRufus(epc);
+        }
         return true;
     }
 

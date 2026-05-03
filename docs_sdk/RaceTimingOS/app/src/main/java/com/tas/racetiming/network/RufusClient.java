@@ -122,8 +122,9 @@ public class RufusClient {
         });
     }
 
-    // POST /sessions — create session
+    // POST /sessions — create session (only if no active session and device is bound)
     public void createSession() {
+        if (tokenSession != null) return;
         if (!configured || deviceId == null) { setStatus("No device"); return; }
         setStatus("Creating session…");
         ioExecutor.execute(() -> {
