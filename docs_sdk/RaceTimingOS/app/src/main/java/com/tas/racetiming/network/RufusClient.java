@@ -150,7 +150,9 @@ public class RufusClient {
 
     // POST /passings — send a tag read
     public void sendPassing(String epc) {
-        if (!configured || tokenSession == null) return;
+        if (!configured) return;
+        final String ts = tokenSession;
+        if (ts == null) return;
         passingCounter++;
         int num = passingCounter;
         ioExecutor.execute(() -> {
@@ -165,7 +167,7 @@ public class RufusClient {
                 list.put(passing);
 
                 JSONObject body = new JSONObject();
-                body.put("token_session", tokenSession);
+                body.put("token_session", ts);
                 body.put("passings_list", list);
 
                 JSONObject resp = doPost("/passings", body);

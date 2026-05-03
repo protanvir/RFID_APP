@@ -1,11 +1,10 @@
 package com.tas.racetiming.ui.dashboard;
 
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
-import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,7 +16,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
 import com.tas.racetiming.R;
@@ -29,8 +27,10 @@ import com.tas.racetiming.tools.FileUtils;
 import com.tas.racetiming.uhf.UHFManager;
 
 import java.io.File;
-import java.util.Locale;
-
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.LinkedList;
 
 public class DashboardFragment extends Fragment {
@@ -92,24 +92,11 @@ public class DashboardFragment extends Fragment {
                     if (p.startsWith("reads=")) reads = Integer.parseInt(p.substring(6));
                 }
             } catch (Exception ignored) {}
-            boolean hasData = reads > 0;
-            boolean allOk = sent > 0 && fail == 0;
-            boolean anyFail = fail > 0;
-            if (hasData && allOk) {
-                statusDot.setBackgroundResource(R.drawable.status_dot_green);
-                tvSendStatus.setText("Sending OK");
-            } else if (anyFail) {
-                statusDot.setBackgroundResource(R.drawable.status_dot_red);
-                tvSendStatus.setText("Send errors");
-            } else if (hasData) {
-                statusDot.setBackgroundResource(R.drawable.status_dot_orange);
-                tvSendStatus.setText("Sending...");
-            } else {
-                statusDot.setBackgroundResource(R.drawable.status_dot_gray);
-                tvSendStatus.setText("Ready");
-            }
-            tvSendCounts.setText("OK " + sent + " / Fail " + fail);
+            updateSendStatus(sent, fail, reads, "Wiclax");
         });
+
+        RufusClient rc = RufusClient.getInstance();
+        rc.addListener(status -> updateRufusStatus(status));
 
         return view;
     }
@@ -224,18 +211,66 @@ public class DashboardFragment extends Fragment {
         } catch (Exception ignored) {}
     }
 
+    private void updateSendStatus(int sent, int fail, int reads, String label) {
+        boolean hasData = reads > 0;
+        boolean allOk = sent > 0 && fail == 0;
+        boolean anyFail = fail > 0;
+        if (hasData && allOk) {
+            statusDot.setBackgroundResource(R.drawable.status_dot_green);
+            tvSendStatus.setText(label + " OK");
+        } else if (anyFail) {
+            statusDot.setBackgroundResource(R.drawable.status_dot_red);
+            tvSendStatus.setText(label + " errors");
+        } else if (hasData) {
+            statusDot.setBackgroundResource(R.drawable.status_dot_orange);
+            tvSendStatus.setText(label + "...");
+        } else {
+            statusDot.setBackgroundResource(R.drawable.status_dot_gray);
+            tvSendStatus.setText("Ready");
+        }
+        tvSendCounts.setText("OK " + sent + " / Fail " + fail);
+    }
+
+    private void updateRufusStatus(String s) {
+        boolean isError = s.contains("error") || s.contains("fail") || s.contains("No") || s.contains("Not");
+        boolean isBusy = s.contains("…") || s.contains("Session active") || s.contains("Bound") || s.contains("Sent");
+        if (isError) {
+            statusDot.setBackgroundResource(R.drawable.status_dot_red);
+            tvSendStatus.setText(s);
+        } else if (isBusy) {
+            statusDot.setBackgroundResource(R.drawable.status_dot_green);
+            tvSendStatus.setText(s);
+        } else {
+            statusDot.setBackgroundResource(R.drawable.status_dot_gray);
+            tvSendStatus.setText("Rufus " + s);
+        }
+    }
+
     private void shareCsv() {
-        File file = new File(FileUtils.getDailyFileName());
-        if (!file.exists()) {
+        File src = new File(FileUtils.getDailyFileName());
+        if (!src.exists()) {
             Toast.makeText(getContext(), R.string.no_csv_today, Toast.LENGTH_SHORT).show();
             return;
         }
-        Uri uri = FileProvider.getUriForFile(requireContext(), requireContext().getPackageName() + ".fileprovider", file);
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("text/csv");
-        intent.putExtra(Intent.EXTRA_STREAM, uri);
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        startActivity(Intent.createChooser(intent, getString(R.string.download_csv)));
+        try {
+            File destDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "racetiming");
+            if (!destDir.exists()) destDir.mkdirs();
+            File dest = new File(destDir, src.getName());
+            copyFile(src, dest);
+            Toast.makeText(getContext(), "Saved to " + dest.getAbsolutePath(), Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(getContext(), "Download failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void copyFile(File src, File dst) throws Exception {
+        InputStream in = new FileInputStream(src);
+        OutputStream out = new FileOutputStream(dst);
+        byte[] buf = new byte[8192];
+        int n;
+        while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+        in.close();
+        out.close();
     }
 
     private void renderFeed() {
