@@ -6,12 +6,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import com.tas.racetiming.network.RufusClient;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -173,6 +174,12 @@ public class UploadManager {
 
         if (totalSent > 0 || totalFailed > 0) {
             notifyStatus();
+        }
+
+        // If Rufus session is closing, close it once queue is empty
+        RufusClient rc = RufusClient.getInstance();
+        if (rc.isCloseScheduled() && pendingCount() == 0) {
+            rc.doFinalClose();
         }
     }
 

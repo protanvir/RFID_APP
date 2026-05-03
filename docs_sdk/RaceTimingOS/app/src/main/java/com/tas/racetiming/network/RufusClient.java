@@ -184,22 +184,32 @@ public class RufusClient {
         });
     }
 
-    // PATCH /sessions/close/{token} — close current session
-    public void closeSession() {
+    // schedule close — keeps tokenSession alive for the upload queue to drain
+    private boolean closeScheduled = false;
+
+    public void scheduleClose() {
         if (tokenSession == null) return;
+        closeScheduled = true;
+        setStatus("Closing…");
+    }
+
+    public boolean isCloseScheduled() {
+        return closeScheduled;
+    }
+
+    // called by UploadManager when queue is empty
+    public void doFinalClose() {
+        if (tokenSession == null) { closeScheduled = false; return; }
         String ts = tokenSession;
         tokenSession = null;
+        closeScheduled = false;
         ioExecutor.execute(() -> {
             try {
-                JSONObject resp = doPatch("/sessions/close/" + ts, new JSONObject());
-                if (resp != null) {
-                    Log.i(TAG, "Session closed: " + ts);
-                    setStatus("Session closed");
-                } else {
-                    setStatus("Close failed");
-                }
+                doPatch("/sessions/close/" + ts, new JSONObject());
+                Log.i(TAG, "Session closed: " + ts);
+                setStatus("Session closed");
             } catch (Exception e) {
-                Log.e(TAG, "closeSession error: " + e.getMessage());
+                Log.e(TAG, "final close error: " + e.getMessage());
             }
         });
     }

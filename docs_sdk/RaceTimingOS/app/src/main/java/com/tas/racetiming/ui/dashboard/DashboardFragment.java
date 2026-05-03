@@ -117,7 +117,7 @@ public class DashboardFragment extends Fragment {
             session.stop();
             uhf.stopInventory();
             if ("rufus".equals(getPlatform())) {
-                RufusClient.getInstance().closeSession();
+                RufusClient.getInstance().scheduleClose();
             }
             updateScanButton(false);
         } else {
@@ -167,7 +167,7 @@ public class DashboardFragment extends Fragment {
             session.stop();
             uhf.stopInventory();
             if ("rufus".equals(getPlatform())) {
-                RufusClient.getInstance().closeSession();
+                RufusClient.getInstance().scheduleClose();
             }
             updateScanButton(false);
         }
@@ -276,7 +276,7 @@ public class DashboardFragment extends Fragment {
             session.stop();
             uhf.stopInventory();
         }
-        RufusClient.getInstance().closeSession();
+        RufusClient.getInstance().doFinalClose();
         UploadManager.getInstance().stop();
         timerHandler.removeCallbacks(timerRunnable);
         if (toneGenerator != null) {
