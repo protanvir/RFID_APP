@@ -51,6 +51,7 @@
     <string name="stop_server">STOP SERVER</string>
     <string name="download_csv">DOWNLOAD CSV</string>
     <string name="no_csv_today">No CSV data for today</string>
+    <string name="bind_device">BIND DEVICE</string>
 
     <!-- Platform -->
     <string name="platform_label">PLATFORM</string>

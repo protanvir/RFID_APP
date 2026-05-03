@@ -425,6 +425,18 @@
                 android:textSize="@dimen/body_lg_text_size"
                 android:hint="My C72 Timer"
                 android:layout_marginBottom="@dimen/stack_sm"/>
+
+            <Button
+                android:id="@+id/btn_bind_rufus"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/action_button_height"
+                android:text="@string/bind_device"
+                android:textAllCaps="true"
+                android:textSize="@dimen/body_lg_text_size"
+                android:textStyle="bold"
+                android:backgroundTint="@color/primary_container"
+                android:textColor="@color/zinc_950"
+                style="@style/Widget.Material3.Button"/>
         </LinearLayout>
 
         <!-- Hardware Monitor -->

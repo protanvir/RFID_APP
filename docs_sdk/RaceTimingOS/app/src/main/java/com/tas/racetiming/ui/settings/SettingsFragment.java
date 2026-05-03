@@ -51,6 +51,7 @@ public class SettingsFragment extends Fragment {
     private EditText etRufusApiKey, etRufusSerial, etRufusAlias;
     private TextView tvRufusStatus;
     private View rufusStatusDot;
+    private Button btnBindRufus;
 
     private TextView tvModuleTemp, tvBatteryHealth;
     private final Handler hwHandler = new Handler();
@@ -91,6 +92,7 @@ public class SettingsFragment extends Fragment {
         etRufusAlias = view.findViewById(R.id.et_rufus_alias);
         tvRufusStatus = view.findViewById(R.id.tv_rufus_status);
         rufusStatusDot = view.findViewById(R.id.tv_rufus_status_dot);
+        btnBindRufus = view.findViewById(R.id.btn_bind_rufus);
 
         tvModuleTemp = view.findViewById(R.id.tv_module_temp);
         tvBatteryHealth = view.findViewById(R.id.tv_battery_health);
@@ -129,8 +131,14 @@ public class SettingsFragment extends Fragment {
         btnSave.setOnClickListener(v -> {
             savePrefs();
             reconfigureWiclax();
-            reconfigureRufus();
             Toast.makeText(getContext(), "Settings saved", Toast.LENGTH_SHORT).show();
+        });
+
+        btnBindRufus.setOnClickListener(v -> {
+            savePrefs();
+            reconfigureRufus();
+            RufusClient.getInstance().bindDevice();
+            Toast.makeText(getContext(), "Binding device…", Toast.LENGTH_SHORT).show();
         });
 
         wiclaxListener = (connected, info) -> {
