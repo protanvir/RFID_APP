@@ -22,6 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class UploadManager {
     private static final String TAG = "UploadManager";
@@ -35,6 +36,7 @@ public class UploadManager {
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "UploadMgr"));
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final CopyOnWriteArrayList<UploadListener> listeners = new CopyOnWriteArrayList<>();
+    private final AtomicInteger passingCounter = new AtomicInteger(0);
 
     private SharedPreferences prefs;
     private boolean running = false;
@@ -203,10 +205,12 @@ public class UploadManager {
         if (apiKey.isEmpty()) { Log.w(TAG, "Rufus skip: no api key"); return false; }
         if (tokenSession == null) { Log.w(TAG, "Rufus skip: no session"); return false; }
 
+        final int num = passingCounter.incrementAndGet();
+
         try {
             org.json.JSONObject passing = new org.json.JSONObject();
             passing.put("timestamp", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).format(new Date()));
-            passing.put("num_passing", 0);
+            passing.put("num_passing", num);
             passing.put("bib", epc);
             passing.put("chip", epc);
 
