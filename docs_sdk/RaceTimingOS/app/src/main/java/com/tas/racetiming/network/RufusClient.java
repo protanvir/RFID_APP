@@ -161,7 +161,7 @@ public class RufusClient {
                 JSONObject passing = new JSONObject();
                 passing.put("timestamp", isoNow());
                 passing.put("num_passing", num);
-                passing.put("bib", epc);
+                passing.put("bib", epc.replaceFirst("^0+(?!$)", ""));
                 passing.put("chip", epc);
 
                 JSONArray list = new JSONArray();

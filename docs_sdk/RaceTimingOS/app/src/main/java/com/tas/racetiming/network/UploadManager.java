@@ -218,7 +218,7 @@ public class UploadManager {
             org.json.JSONObject passing = new org.json.JSONObject();
             passing.put("timestamp", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).format(new Date()));
             passing.put("num_passing", num);
-            passing.put("bib", epc);
+            passing.put("bib", epc.replaceFirst("^0+(?!$)", ""));
             passing.put("chip", epc);
 
             org.json.JSONArray list = new org.json.JSONArray();
