@@ -7,6 +7,7 @@ public class SessionData {
     private long totalReads = 0;
     private final Set<String> uniqueTags = new LinkedHashSet<>();
     private long sessionStartTimeMs = 0;
+    private long sessionStopTimeMs = 0;
     private boolean isScanning = false;
 
     public void incrementReads(String epc) {
@@ -24,6 +25,7 @@ public class SessionData {
 
     public void start() {
         sessionStartTimeMs = System.currentTimeMillis();
+        sessionStopTimeMs = 0;
         isScanning = true;
         totalReads = 0;
         uniqueTags.clear();
@@ -31,12 +33,14 @@ public class SessionData {
 
     public void stop() {
         isScanning = false;
+        sessionStopTimeMs = System.currentTimeMillis();
     }
 
     public void reset() {
         totalReads = 0;
         uniqueTags.clear();
         sessionStartTimeMs = 0;
+        sessionStopTimeMs = 0;
     }
 
     public boolean isScanning() {
@@ -45,7 +49,9 @@ public class SessionData {
 
     public String getElapsedTimeFormatted() {
         if (sessionStartTimeMs == 0) return "--:--:--";
-        long elapsed = System.currentTimeMillis() - sessionStartTimeMs;
+        long end = (isScanning || sessionStopTimeMs == 0)
+                ? System.currentTimeMillis() : sessionStopTimeMs; // freeze when stopped
+        long elapsed = end - sessionStartTimeMs;
         long hours = elapsed / 3600000;
         long mins = (elapsed % 3600000) / 60000;
         long secs = (elapsed % 60000) / 1000;

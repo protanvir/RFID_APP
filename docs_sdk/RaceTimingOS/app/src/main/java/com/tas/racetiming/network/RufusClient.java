@@ -22,13 +22,15 @@ public class RufusClient {
     private static final String DEFAULT_URL = "https://api.runonrufus.com/v0";
     private static RufusClient instance;
 
-    private String apiKey = "";
-    private String serialNumber = "";
-    private String alias = "";
-    private String serverUrl = DEFAULT_URL;
-    private String deviceId;
-    private String tokenSession;
-    private boolean configured = false;
+    // Written from the main thread (configure/setters) and Rufus-IO thread,
+    // read from the UploadMgr scheduler thread — volatile for visibility
+    private volatile String apiKey = "";
+    private volatile String serialNumber = "";
+    private volatile String alias = "";
+    private volatile String serverUrl = DEFAULT_URL;
+    private volatile String deviceId;
+    private volatile String tokenSession;
+    private volatile boolean configured = false;
     private int passingCounter = 0;
 
     private final ExecutorService ioExecutor = Executors.newSingleThreadExecutor(r -> new Thread(r, "Rufus-IO"));
@@ -186,7 +188,7 @@ public class RufusClient {
     }
 
     // schedule close — keeps tokenSession alive for the upload queue to drain
-    private boolean closeScheduled = false;
+    private volatile boolean closeScheduled = false;
 
     public void scheduleClose() {
         if (tokenSession == null) return;

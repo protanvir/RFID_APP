@@ -284,6 +284,21 @@ public class SettingsFragment extends Fragment {
                 p.getString("device_id", "C72-SN-001"));
     }
 
+    // Fragment is hidden/shown rather than destroyed on navigation; polling the
+    // UHF module temperature during an active scan disturbs UART traffic, so
+    // stop it whenever this screen is not visible
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (hidden) {
+            hwHandler.removeCallbacks(hwRunnable);
+            savePrefs();
+        } else {
+            updateHardwareMonitor();
+            hwHandler.postDelayed(hwRunnable, 5000);
+        }
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();

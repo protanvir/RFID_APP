@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFD700">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingLeft="48dp"
+        android:paddingRight="48dp"
+        android:paddingTop="80dp"
+        android:paddingBottom="32dp">
+
+        <!-- Logo - top area -->
+        <ImageView
+            android:id="@+id/iv_logo"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:scaleType="fitCenter"
+            android:src="@drawable/tas_logo"
+            android:contentDescription="TAS Logo"/>
+
+        <!-- Tagline - center area -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="TIMING IS EVERYTHING"
+            android:textColor="#1C1C1A"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif"
+            android:letterSpacing="0.15"
+            android:layout_marginTop="24dp"
+            android:gravity="center_horizontal"/>
+
+        <!-- Sport icons row -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="20dp"
+            android:layout_gravity="center_horizontal">
+
+            <View
+                android:layout_width="40dp"
+                android:layout_height="2dp"
+                android:background="#1C1C1A"
+                android:layout_gravity="center_vertical"/>
+
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ticon"
+                android:contentDescription=""
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"/>
+
+            <View
+                android:layout_width="40dp"
+                android:layout_height="2dp"
+                android:background="#1C1C1A"
+                android:layout_gravity="center_vertical"/>
+        </LinearLayout>
+
+        <!-- Bottom spacer -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Copyright footer -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Total Active Sports"
+                android:textColor="#1C1C1A"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:alpha="0.6"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="totalactivesports@gmail.com"
+                android:textColor="#1C1C1A"
+                android:textSize="9sp"
+                android:alpha="0.5"
+                android:layout_marginTop="2dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Developed by Tanvir Ahmed, CTO"
+                android:textColor="#1C1C1A"
+                android:textSize="9sp"
+                android:alpha="0.4"
+                android:layout_marginTop="2dp"/>
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>

@@ -45,11 +45,15 @@ public class DashboardFragment extends Fragment {
     private ToneGenerator toneGenerator;
     private long lastBeepMs = 0;
 
+    // Rebuilding the feed on every tag read floods the main thread at burst
+    // rates; coalesce renders to at most one per interval
+    private static final long FEED_RENDER_INTERVAL_MS = 200;
+    private boolean feedRenderPending = false;
+
     private final Runnable timerRunnable = new Runnable() {
         @Override
         public void run() {
-            String time = android.text.format.DateFormat.format("HH:mm:ss", System.currentTimeMillis()).toString();
-            tvTimer.setText(time);
+            tvTimer.setText(session.getElapsedTimeFormatted());
             tvTotalReads.setText(String.valueOf(session.getTotalReads()));
             tvUniqueTags.setText(String.valueOf(session.getUniqueTagCount()));
             timerHandler.postDelayed(this, 1000);
@@ -96,7 +100,11 @@ public class DashboardFragment extends Fragment {
             tvSendCounts.setText("");
             return;
         }
-        if (pending > 0) {
+        if (failed > 0) {
+            statusDot.setBackgroundResource(R.drawable.status_dot_red);
+            tvSendStatus.setText("Retrying — pending: " + pending);
+            tvSendCounts.setText("");
+        } else if (pending > 0) {
             statusDot.setBackgroundResource(R.drawable.status_dot_orange);
             tvSendStatus.setText("Pending: " + pending);
             tvSendCounts.setText("");
@@ -138,7 +146,7 @@ public class DashboardFragment extends Fragment {
         TagRead read = new TagRead(epc, time, rssi);
         recentReads.addFirst(read);
         if (recentReads.size() > 20) recentReads.removeLast();
-        renderFeed();
+        scheduleFeedRender();
         playBeep();
         FileUtils.writeTagToCsv(epc, rssi);
         UploadManager.getInstance().enqueue(epc, rssi);
@@ -211,6 +219,15 @@ public class DashboardFragment extends Fragment {
         out.close();
     }
 
+    private void scheduleFeedRender() {
+        if (feedRenderPending) return;
+        feedRenderPending = true;
+        timerHandler.postDelayed(() -> {
+            feedRenderPending = false;
+            renderFeed();
+        }, FEED_RENDER_INTERVAL_MS);
+    }
+
     private void renderFeed() {
         if (getActivity() == null) return;
         getActivity().runOnUiThread(() -> {
@@ -262,8 +279,9 @@ public class DashboardFragment extends Fragment {
             uhf.stopInventory();
         }
         RufusClient.getInstance().doFinalClose();
+        UploadManager.getInstance().removeListener(uploadListener);
         UploadManager.getInstance().stop();
-        timerHandler.removeCallbacks(timerRunnable);
+        timerHandler.removeCallbacksAndMessages(null); // timer + pending feed render
         if (toneGenerator != null) {
             toneGenerator.release();
             toneGenerator = null;

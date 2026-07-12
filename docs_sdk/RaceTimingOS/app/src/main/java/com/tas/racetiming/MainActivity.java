@@ -25,6 +25,9 @@ import com.tas.racetiming.uhf.UHFManager;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG_DASHBOARD = "dashboard";
+    private static final String TAG_SETTINGS = "settings";
+
     private FragmentManager fragmentManager;
     private DashboardFragment dashboardFragment;
     private SettingsFragment settingsFragment;
@@ -41,22 +44,25 @@ public class MainActivity extends AppCompatActivity {
 
         fragmentManager = getSupportFragmentManager();
 
-        dashboardFragment = new DashboardFragment();
-        settingsFragment = new SettingsFragment();
+        // Reattach restored instances instead of creating duplicates
+        dashboardFragment = (DashboardFragment) fragmentManager.findFragmentByTag(TAG_DASHBOARD);
+        settingsFragment = (SettingsFragment) fragmentManager.findFragmentByTag(TAG_SETTINGS);
+        if (dashboardFragment == null) {
+            dashboardFragment = new DashboardFragment();
+            fragmentManager.beginTransaction()
+                    .add(R.id.nav_host_fragment, dashboardFragment, TAG_DASHBOARD)
+                    .commit();
+        }
 
         ImageButton btnSettings = findViewById(R.id.btn_settings);
 
         btnSettings.setOnClickListener(v -> {
-            if (settingsFragment.isVisible()) {
+            if (settingsFragment != null && settingsFragment.isVisible()) {
                 showDashboard();
             } else {
                 showSettings();
             }
         });
-
-        if (savedInstanceState == null) {
-            showDashboard();
-        }
 
         // Load saved Wiclax config and start
         SharedPreferences prefs = getSharedPreferences("tas_timer_settings", 0);
@@ -71,16 +77,21 @@ public class MainActivity extends AppCompatActivity {
         wc.start();
     }
 
+    // show/hide keeps DashboardFragment alive — replace() destroyed its view,
+    // which stopped scanning and the upload queue mid-race
     public void showDashboard() {
-        fragmentManager.beginTransaction()
-                .replace(R.id.nav_host_fragment, dashboardFragment)
-                .commit();
+        androidx.fragment.app.FragmentTransaction tx = fragmentManager.beginTransaction();
+        if (settingsFragment != null) tx.hide(settingsFragment);
+        tx.show(dashboardFragment).commit();
     }
 
     public void showSettings() {
-        fragmentManager.beginTransaction()
-                .replace(R.id.nav_host_fragment, settingsFragment)
-                .commit();
+        androidx.fragment.app.FragmentTransaction tx = fragmentManager.beginTransaction();
+        if (settingsFragment == null) {
+            settingsFragment = new SettingsFragment();
+            tx.add(R.id.nav_host_fragment, settingsFragment, TAG_SETTINGS);
+        }
+        tx.hide(dashboardFragment).show(settingsFragment).commit();
     }
 
     private void checkStoragePermission() {

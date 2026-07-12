@@ -10,10 +10,16 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class FileUtils {
     private static final String TAG = "FileUtils";
     private static final String BASE_DIR = "/sdcard/racetiming/";
+
+    // Tag reads arrive on the main thread at burst rates; file I/O there risks ANR
+    private static final ExecutorService ioExecutor =
+            Executors.newSingleThreadExecutor(r -> new Thread(r, "CsvWriter"));
 
     public static String getDailyFileName() {
         String date = new SimpleDateFormat("yyyyMMdd", Locale.US).format(new Date());
@@ -28,13 +34,18 @@ public class FileUtils {
     }
 
     public static void writeTagToCsv(String epc, String rssi) {
+        final Date readTime = new Date(); // capture at read time, not when the task runs
+        ioExecutor.execute(() -> writeTagLine(epc, rssi, readTime));
+    }
+
+    private static void writeTagLine(String epc, String rssi, Date readTime) {
         try {
             ensureDirExists();
             File file = new File(getDailyFileName());
             boolean isNew = !file.exists();
 
             SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.SSS", Locale.US);
-            String timestamp = sdf.format(new Date());
+            String timestamp = sdf.format(readTime);
 
             String line = epc + ";" + timestamp + ";" + rssi + ";;;0\r\n";
 

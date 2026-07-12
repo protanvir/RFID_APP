@@ -30,6 +30,7 @@ public class UploadManager {
     private static final String PENDING_FILE = "pending.csv";
     private static final String KEY_CURSOR = "upload_cursor";
     private static final long INTERVAL_MS = 1000;
+    private static final String QUEUE_TS_FORMAT = "dd-MM-yyyy HH:mm:ss.SSS";
 
     private static UploadManager instance;
 
@@ -38,8 +39,15 @@ public class UploadManager {
     private final CopyOnWriteArrayList<UploadListener> listeners = new CopyOnWriteArrayList<>();
     private final AtomicInteger passingCounter = new AtomicInteger(0);
 
+    private static final long MAX_BACKOFF_MS = 60_000;
+
     private SharedPreferences prefs;
-    private boolean running = false;
+    private volatile boolean running = false;
+    private java.util.concurrent.ScheduledFuture<?> cycleTask;
+
+    // exponential backoff after consecutive failed cycles (scheduler thread only)
+    private int consecutiveFailures = 0;
+    private long nextAttemptMs = 0;
 
     public interface UploadListener {
         void onStatus(String platform, int sent, int failed, int pending);
@@ -66,23 +74,28 @@ public class UploadManager {
         listeners.remove(l);
     }
 
-    public void start() {
+    public synchronized void start() {
         if (running) return;
         running = true;
-        scheduler.scheduleWithFixedDelay(this::runCycle, 0, INTERVAL_MS, TimeUnit.MILLISECONDS);
+        cycleTask = scheduler.scheduleWithFixedDelay(this::runCycle, 0, INTERVAL_MS, TimeUnit.MILLISECONDS);
     }
 
-    public void stop() {
+    public synchronized void stop() {
         running = false;
+        if (cycleTask != null) {
+            cycleTask.cancel(false);
+            cycleTask = null;
+        }
     }
 
     public void enqueue(String epc, String rssi) {
+        final Date readTime = new Date(); // capture at read time, not when the task runs
         scheduler.execute(() -> {
             try {
                 File dir = new File(BASE_DIR);
                 if (!dir.exists()) dir.mkdirs();
                 File file = new File(dir, PENDING_FILE);
-                String ts = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss.SSS", Locale.US).format(new Date());
+                String ts = new SimpleDateFormat(QUEUE_TS_FORMAT, Locale.US).format(readTime);
                 String line = epc + ";" + ts + ";" + rssi + "\r\n";
                 FileOutputStream fos = new FileOutputStream(file, true);
                 fos.write(line.getBytes(StandardCharsets.UTF_8));
@@ -107,6 +120,7 @@ public class UploadManager {
 
     private void runCycle() {
         if (!running || prefs == null) return;
+        if (System.currentTimeMillis() < nextAttemptMs) return; // backing off
         try {
             processBatch();
         } catch (Exception e) {
@@ -131,10 +145,11 @@ public class UploadManager {
 
                 String[] parts = line.split(";", 3);
                 String epc = parts.length > 0 ? parts[0] : "";
+                String queuedTs = parts.length > 1 ? parts[1] : "";
                 String rssi = parts.length > 2 ? parts[2] : "";
                 if (epc.isEmpty()) { idx++; cursor++; continue; }
 
-                if (sendToPlatform(epc, rssi)) {
+                if (sendToPlatform(epc, queuedTs, rssi)) {
                     totalSent++;
                     cursor = idx + 1;
                     prefs.edit().putInt(KEY_CURSOR, cursor).apply();
@@ -148,15 +163,25 @@ public class UploadManager {
             Log.e(TAG, "processBatch error: " + e.getMessage());
         }
 
+        if (totalFailed > 0) {
+            consecutiveFailures++;
+            long backoff = Math.min(MAX_BACKOFF_MS, INTERVAL_MS << Math.min(consecutiveFailures, 6));
+            nextAttemptMs = System.currentTimeMillis() + backoff;
+            Log.w(TAG, "send failed, backing off " + backoff + "ms (streak " + consecutiveFailures + ")");
+        } else if (totalSent > 0) {
+            consecutiveFailures = 0;
+            nextAttemptMs = 0;
+        }
+
         if (totalSent > 0 || totalFailed > 0) {
-            notifyStatus();
+            notifyStatus(totalSent, totalFailed);
         }
 
         int totalLines = countLines(f);
         if (cursor >= totalLines && totalLines > 0) {
             f.delete();
             prefs.edit().putInt(KEY_CURSOR, 0).apply();
-            notifyStatus();
+            notifyStatus(totalSent, 0);
         }
 
         // Close Rufus session when queue is empty
@@ -166,27 +191,39 @@ public class UploadManager {
         }
     }
 
-    private boolean sendToPlatform(String epc, String rssi) {
+    private boolean sendToPlatform(String epc, String queuedTs, String rssi) {
         String platform = prefs.getString("selected_platform", "off");
         if ("off".equals(platform)) return true;
-        if ("wiclax".equals(platform)) return sendWiclax(epc);
+        if ("wiclax".equals(platform)) return sendWiclax(epc, queuedTs);
         if ("rufus".equals(platform)) {
             if (RufusClient.getInstance().getTokenSession() == null) {
                 RufusClient.getInstance().createSession();
                 return false; // will retry next cycle when session is ready
             }
-            return sendRufus(epc);
+            return sendRufus(epc, queuedTs);
         }
         return true;
     }
 
-    private boolean sendWiclax(String epc) {
+    // Parse the timestamp stored in pending.csv; null if missing/corrupt.
+    private Date parseQueuedTs(String ts) {
+        if (ts == null || ts.isEmpty()) return null;
+        try {
+            return new SimpleDateFormat(QUEUE_TS_FORMAT, Locale.US).parse(ts);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private boolean sendWiclax(String epc, String queuedTs) {
         String url = prefs.getString("server_url", "http://wiclax.com:35014");
         String user = prefs.getString("user", "");
         String deviceId = prefs.getString("device_id", "");
         if (user.isEmpty() || deviceId.isEmpty()) return true;
 
-        String ts = new SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.US).format(new Date());
+        Date readTime = parseQueuedTs(queuedTs);
+        String ts = new SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.US)
+                .format(readTime != null ? readTime : new Date());
         String passingData = "@" + epc + "@" + ts;
         String fullUrl = url + "?user=" + URLEncoder.encode(user)
                 + "&deviceId=" + URLEncoder.encode(deviceId)
@@ -206,17 +243,19 @@ public class UploadManager {
         }
     }
 
-    private boolean sendRufus(String epc) {
+    private boolean sendRufus(String epc, String queuedTs) {
         String apiKey = prefs.getString("rufus_api_key", "");
         String tokenSession = RufusClient.getInstance().getTokenSession();
         if (apiKey.isEmpty()) { Log.w(TAG, "Rufus skip: no api key"); return false; }
         if (tokenSession == null) { Log.w(TAG, "Rufus skip: no session"); return false; }
 
         final int num = passingCounter.incrementAndGet();
+        Date readTime = parseQueuedTs(queuedTs);
 
         try {
             org.json.JSONObject passing = new org.json.JSONObject();
-            passing.put("timestamp", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).format(new Date()));
+            passing.put("timestamp", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
+                    .format(readTime != null ? readTime : new Date()));
             passing.put("num_passing", num);
             passing.put("bib", epc.replaceFirst("^0+(?!$)", ""));
             passing.put("chip", epc);
@@ -274,10 +313,14 @@ public class UploadManager {
     }
 
     private void notifyStatus() {
+        notifyStatus(0, 0);
+    }
+
+    private void notifyStatus(int sent, int failed) {
         int pending = pendingCount();
         String platform = prefs != null ? prefs.getString("selected_platform", "off") : "off";
         mainHandler.post(() -> {
-            for (UploadListener l : listeners) l.onStatus(platform, 0, 0, pending);
+            for (UploadListener l : listeners) l.onStatus(platform, sent, failed, pending);
         });
     }
 }
