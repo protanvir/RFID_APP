@@ -4,7 +4,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.OutputStream;
@@ -31,7 +30,6 @@ public class RufusClient {
     private volatile String deviceId;
     private volatile String tokenSession;
     private volatile boolean configured = false;
-    private int passingCounter = 0;
 
     private final ExecutorService ioExecutor = Executors.newSingleThreadExecutor(r -> new Thread(r, "Rufus-IO"));
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -138,7 +136,6 @@ public class RufusClient {
                 JSONObject resp = doPost("/sessions", body);
                 if (resp != null) {
                     tokenSession = resp.getJSONObject("body").getString("token_session");
-                    passingCounter = 0;
                     Log.i(TAG, "Session created: " + tokenSession);
                     setStatus("Session active");
                 } else {
@@ -151,61 +148,11 @@ public class RufusClient {
         });
     }
 
-    // POST /passings — send a tag read
-    public void sendPassing(String epc) {
-        if (!configured) return;
-        final String ts = tokenSession;
-        if (ts == null) return;
-        passingCounter++;
-        int num = passingCounter;
-        ioExecutor.execute(() -> {
-            try {
-                JSONObject passing = new JSONObject();
-                passing.put("timestamp", isoNow());
-                passing.put("num_passing", num);
-                passing.put("bib", epc.replaceFirst("^0+(?!$)", ""));
-                passing.put("chip", epc);
-
-                JSONArray list = new JSONArray();
-                list.put(passing);
-
-                JSONObject body = new JSONObject();
-                body.put("token_session", ts);
-                body.put("passings_list", list);
-
-                JSONObject resp = doPost("/passings", body);
-                if (resp != null) {
-                    int inserted = resp.getJSONObject("body").optInt("inserted_count", 0);
-                    setStatus("Sent (" + inserted + ")");
-                } else {
-                    setStatus("Send failed");
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "sendPassing error: " + e.getMessage());
-                setStatus("Send error");
-            }
-        });
-    }
-
-    // schedule close — keeps tokenSession alive for the upload queue to drain
-    private volatile boolean closeScheduled = false;
-
-    public void scheduleClose() {
-        if (tokenSession == null) return;
-        closeScheduled = true;
-        setStatus("Closing…");
-    }
-
-    public boolean isCloseScheduled() {
-        return closeScheduled;
-    }
-
     // called by UploadManager when queue is empty
     public void doFinalClose() {
-        if (tokenSession == null) { closeScheduled = false; return; }
+        if (tokenSession == null) return;
         String ts = tokenSession;
         tokenSession = null;
-        closeScheduled = false;
         ioExecutor.execute(() -> {
             try {
                 doPatch("/sessions/close/" + ts, new JSONObject());
@@ -213,116 +160,6 @@ public class RufusClient {
                 setStatus("Session closed");
             } catch (Exception e) {
                 Log.e(TAG, "final close error: " + e.getMessage());
-            }
-        });
-    }
-
-    // PATCH /devices/{deviceid}/status — telemetry
-    public void reportTelemetry(int batteryPct, boolean charging, int tempCelsius) {
-        if (!configured || deviceId == null) return;
-        ioExecutor.execute(() -> {
-            try {
-                JSONObject body = new JSONObject();
-                body.put("reported_at", isoNow());
-                body.put("device_status", "ONLINE");
-                body.put("battery_percentage", batteryPct);
-                body.put("charging", charging);
-                body.put("temperature_celsius", tempCelsius);
-
-                doPatch("/devices/" + deviceId + "/status", body);
-            } catch (Exception e) {
-                Log.e(TAG, "telemetry error: " + e.getMessage());
-            }
-        });
-    }
-
-    // --- Session lifecycle helper ---
-
-    public interface SessionCallback {
-        void onReady();
-        void onError(String message);
-    }
-
-    private SessionCallback pendingCallback;
-
-    public void startSession(SessionCallback callback) {
-        this.pendingCallback = callback;
-        if (!configured) {
-            setStatus("Not configured");
-            notifySessionError("API key or serial not configured");
-            return;
-        }
-        if (deviceId == null) {
-            setStatus("Binding…");
-            ioExecutor.execute(() -> {
-                try {
-                    JSONObject body = new JSONObject();
-                    body.put("type", "CUSTOM_CHRONO");
-                    body.put("model", "C72-UHF");
-                    body.put("serial_number", serialNumber);
-                    body.put("alias", alias.isEmpty() ? serialNumber : alias);
-
-                    JSONObject resp = doPost("/devices", body);
-                    if (resp != null) {
-                        deviceId = resp.getJSONObject("body").getString("deviceid");
-                        Log.i(TAG, "Device bound: " + deviceId);
-                        mainHandler.post(this::doCreateSession);
-                    } else {
-                        setStatus("Bind failed");
-                        notifySessionError("Bind failed");
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "bind error: " + e.getMessage());
-                    setStatus("Bind error");
-                    notifySessionError(e.getMessage());
-                }
-            });
-        } else {
-            mainHandler.post(this::doCreateSession);
-        }
-    }
-
-    private void doCreateSession() {
-        setStatus("Creating session…");
-        ioExecutor.execute(() -> {
-            try {
-                JSONObject body = new JSONObject();
-                body.put("deviceid", deviceId);
-                body.put("alias", "C72-" + new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(new Date()));
-
-                JSONObject resp = doPost("/sessions", body);
-                if (resp != null) {
-                    tokenSession = resp.getJSONObject("body").getString("token_session");
-                    passingCounter = 0;
-                    Log.i(TAG, "Session created: " + tokenSession);
-                    setStatus("Session active");
-                    notifySessionReady();
-                } else {
-                    setStatus("Session failed");
-                    notifySessionError("Session failed");
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "createSession error: " + e.getMessage());
-                setStatus("Session error");
-                notifySessionError(e.getMessage());
-            }
-        });
-    }
-
-    private void notifySessionReady() {
-        mainHandler.post(() -> {
-            if (pendingCallback != null) {
-                pendingCallback.onReady();
-                pendingCallback = null;
-            }
-        });
-    }
-
-    private void notifySessionError(String msg) {
-        mainHandler.post(() -> {
-            if (pendingCallback != null) {
-                pendingCallback.onError(msg);
-                pendingCallback = null;
             }
         });
     }
@@ -378,7 +215,4 @@ public class RufusClient {
         return buf.toByteArray();
     }
 
-    private String isoNow() {
-        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).format(new Date());
-    }
 }

@@ -236,9 +236,12 @@ public class UploadManager {
             int code = conn.getResponseCode();
             conn.disconnect();
             Log.i(TAG, "Wiclax code=" + code + " epc=" + epc);
-            return code >= 200 && code < 300;
+            boolean ok = code >= 200 && code < 300;
+            WiclaxClient.getInstance().reportSendResult(ok, ok ? "Sent (" + code + ")" : "HTTP " + code);
+            return ok;
         } catch (Exception e) {
             Log.w(TAG, "Wiclax fail: " + e.getMessage());
+            WiclaxClient.getInstance().reportSendResult(false, "Send failed");
             return false;
         }
     }
@@ -253,9 +256,13 @@ public class UploadManager {
         Date readTime = parseQueuedTs(queuedTs);
 
         try {
+            // API expects RFC 3339; convert device-local read time to real UTC
+            SimpleDateFormat iso = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+            iso.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+
             org.json.JSONObject passing = new org.json.JSONObject();
-            passing.put("timestamp", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
-                    .format(readTime != null ? readTime : new Date()));
+            passing.put("timestamp", iso.format(readTime != null ? readTime : new Date()));
+            passing.put("timezone", java.util.TimeZone.getDefault().getID());
             passing.put("num_passing", num);
             passing.put("bib", epc.replaceFirst("^0+(?!$)", ""));
             passing.put("chip", epc);

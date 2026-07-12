@@ -126,6 +126,13 @@ public class DashboardFragment extends Fragment {
             uhf.stopInventory();
             updateScanButton(false);
         } else {
+            if (!hasStorageAccess()) {
+                // scan still works (live feed + counters), but CSV log and the
+                // upload queue both live on external storage
+                Toast.makeText(getContext(),
+                        "Storage permission missing — reads will NOT be saved or uploaded",
+                        Toast.LENGTH_LONG).show();
+            }
             if (!uhf.isInitialized()) {
                 if (getActivity() != null) {
                     uhf.init(getActivity());
@@ -150,6 +157,15 @@ public class DashboardFragment extends Fragment {
         playBeep();
         FileUtils.writeTagToCsv(epc, rssi);
         UploadManager.getInstance().enqueue(epc, rssi);
+    }
+
+    private boolean hasStorageAccess() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            return Environment.isExternalStorageManager();
+        }
+        return ContextCompat.checkSelfPermission(requireContext(),
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == android.content.pm.PackageManager.PERMISSION_GRANTED;
     }
 
     private String getPlatform() {
