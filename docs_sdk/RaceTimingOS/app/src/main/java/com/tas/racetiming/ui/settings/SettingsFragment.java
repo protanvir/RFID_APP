@@ -150,16 +150,14 @@ public class SettingsFragment extends Fragment {
         wc.addListener(wiclaxListener);
         wiclaxListener.onStatusChanged(wc.isConnected(), wc.getCurrentStatus());
 
-        rufusListener = status -> {
+        rufusListener = (status, error) -> {
             tvRufusStatus.setText(status);
-            boolean ok = !status.contains("error") && !status.contains("fail") && !status.contains("No")
-                    && !status.contains("Not");
-            rufusStatusDot.setBackgroundResource(ok
-                    ? R.drawable.status_dot_green : R.drawable.status_dot_red);
+            rufusStatusDot.setBackgroundResource(error
+                    ? R.drawable.status_dot_red : R.drawable.status_dot_green);
         };
         RufusClient rc = RufusClient.getInstance();
         rc.addListener(rufusListener);
-        rufusListener.onStatusChanged(rc.getStatus());
+        rufusListener.onStatusChanged(rc.getStatus(), rc.isStatusError());
 
         updateHardwareMonitor();
         hwHandler.postDelayed(hwRunnable, 5000);
@@ -261,8 +259,17 @@ public class SettingsFragment extends Fragment {
         etRufusApiKey.setText(p.getString(KEY_RUFUS_API_KEY, ""));
         String defaultSn = p.getString(KEY_RUFUS_SERIAL, "");
         if (defaultSn.isEmpty()) {
-            defaultSn = Build.SERIAL != null && !Build.SERIAL.equals("unknown")
-                    ? Build.SERIAL : "C72-SN-001";
+            // Build.SERIAL returns "unknown" on API 26+ without privileged perms;
+            // fall back to ANDROID_ID, which is stable per device
+            if (Build.SERIAL != null && !Build.SERIAL.isEmpty() && !"unknown".equals(Build.SERIAL)) {
+                defaultSn = Build.SERIAL;
+            } else {
+                String androidId = android.provider.Settings.Secure.getString(
+                        requireActivity().getContentResolver(),
+                        android.provider.Settings.Secure.ANDROID_ID);
+                defaultSn = (androidId != null && !androidId.isEmpty())
+                        ? "C72-" + androidId : "C72-SN-001";
+            }
         }
         etRufusSerial.setText(defaultSn);
         String defaultAlias = p.getString(KEY_RUFUS_ALIAS, "");

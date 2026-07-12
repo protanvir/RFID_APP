@@ -6,11 +6,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -28,7 +27,9 @@ public class UploadManager {
     private static final String TAG = "UploadManager";
     private static final String BASE_DIR = Environment.getExternalStorageDirectory().getAbsolutePath() + "/racetiming/";
     private static final String PENDING_FILE = "pending.csv";
-    private static final String KEY_CURSOR = "upload_cursor";
+    // byte offset into pending.csv (long); old line-count key "upload_cursor"
+    // is abandoned — worst case on upgrade is a resend, which the server dedups
+    private static final String KEY_CURSOR = "upload_cursor_pos";
     private static final long INTERVAL_MS = 1000;
     private static final String QUEUE_TS_FORMAT = "dd-MM-yyyy HH:mm:ss.SSS";
 
@@ -110,12 +111,13 @@ public class UploadManager {
     public int pendingCount() {
         File f = new File(BASE_DIR + PENDING_FILE);
         if (!f.exists()) return 0;
-        int cursor = prefs != null ? prefs.getInt(KEY_CURSOR, 0) : 0;
+        long cursor = prefs != null ? prefs.getLong(KEY_CURSOR, 0) : 0;
         int lines = 0;
-        try (BufferedReader r = new BufferedReader(new FileReader(f))) {
-            while (r.readLine() != null) lines++;
+        try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
+            if (cursor > 0 && cursor <= raf.length()) raf.seek(cursor);
+            while (raf.readLine() != null) lines++;
         } catch (Exception ignored) {}
-        return Math.max(0, lines - cursor);
+        return lines;
     }
 
     private void runCycle() {
@@ -132,32 +134,34 @@ public class UploadManager {
         File f = new File(BASE_DIR + PENDING_FILE);
         if (!f.exists()) return;
 
-        int cursor = prefs.getInt(KEY_CURSOR, 0);
+        long cursor = prefs.getLong(KEY_CURSOR, 0);
         int totalSent = 0, totalFailed = 0;
 
-        try (BufferedReader br = new BufferedReader(new FileReader(f))) {
+        // seek straight to the first unsent line instead of re-reading the
+        // whole file every cycle (queue lines are ASCII, so readLine is safe)
+        try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
+            if (cursor > raf.length()) cursor = 0; // stale cursor from a replaced file
+            raf.seek(cursor);
             String line;
-            int idx = 0;
-            while ((line = br.readLine()) != null) {
-                if (idx < cursor) { idx++; continue; }
+            while ((line = raf.readLine()) != null) {
+                long lineEnd = raf.getFilePointer();
                 line = line.trim();
-                if (line.isEmpty()) { idx++; cursor++; continue; }
+                if (line.isEmpty()) { cursor = lineEnd; continue; }
 
                 String[] parts = line.split(";", 3);
                 String epc = parts.length > 0 ? parts[0] : "";
                 String queuedTs = parts.length > 1 ? parts[1] : "";
                 String rssi = parts.length > 2 ? parts[2] : "";
-                if (epc.isEmpty()) { idx++; cursor++; continue; }
+                if (epc.isEmpty()) { cursor = lineEnd; continue; }
 
                 if (sendToPlatform(epc, queuedTs, rssi)) {
                     totalSent++;
-                    cursor = idx + 1;
-                    prefs.edit().putInt(KEY_CURSOR, cursor).apply();
+                    cursor = lineEnd;
+                    prefs.edit().putLong(KEY_CURSOR, cursor).apply();
                 } else {
                     totalFailed++;
                     break;
                 }
-                idx++;
             }
         } catch (Exception e) {
             Log.e(TAG, "processBatch error: " + e.getMessage());
@@ -177,10 +181,10 @@ public class UploadManager {
             notifyStatus(totalSent, totalFailed);
         }
 
-        int totalLines = countLines(f);
-        if (cursor >= totalLines && totalLines > 0) {
+        long fileLen = f.length();
+        if (fileLen > 0 && cursor >= fileLen) {
             f.delete();
-            prefs.edit().putInt(KEY_CURSOR, 0).apply();
+            prefs.edit().putLong(KEY_CURSOR, 0).apply();
             notifyStatus(totalSent, 0);
         }
 
@@ -225,10 +229,10 @@ public class UploadManager {
         String ts = new SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.US)
                 .format(readTime != null ? readTime : new Date());
         String passingData = "@" + epc + "@" + ts;
-        String fullUrl = url + "?user=" + URLEncoder.encode(user)
-                + "&deviceId=" + URLEncoder.encode(deviceId)
-                + "&passings=" + URLEncoder.encode(passingData);
         try {
+            String fullUrl = url + "?user=" + URLEncoder.encode(user, "UTF-8")
+                    + "&deviceId=" + URLEncoder.encode(deviceId, "UTF-8")
+                    + "&passings=" + URLEncoder.encode(passingData, "UTF-8");
             HttpURLConnection conn = (HttpURLConnection) new URL(fullUrl).openConnection();
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(8000);
@@ -291,24 +295,29 @@ public class UploadManager {
             os.close();
 
             int code = conn.getResponseCode();
-            String resp = code >= 200 && code < 300 ?
-                new String(readAll(conn.getInputStream()), "UTF-8") :
-                (conn.getErrorStream() != null ? new String(readAll(conn.getErrorStream()), "UTF-8") : "");
-            conn.disconnect();
-            Log.i(TAG, "Rufus POST code=" + code + " epc=" + epc + " resp=" + resp);
-            return code >= 200 && code < 300;
+            if (code >= 200 && code < 300) {
+                String resp = new String(readAll(conn.getInputStream()), "UTF-8");
+                conn.disconnect();
+                // log counts, not the raw body — the response echoes token_session
+                String counts = "";
+                try {
+                    org.json.JSONObject rb = new org.json.JSONObject(resp).getJSONObject("body");
+                    counts = "inserted=" + rb.optInt("inserted_count", -1)
+                            + " dup=" + rb.optInt("duplicate_count", 0);
+                } catch (Exception ignored) {}
+                Log.i(TAG, "Rufus POST code=" + code + " epc=" + epc + " " + counts);
+                return true;
+            } else {
+                String err = conn.getErrorStream() != null
+                        ? new String(readAll(conn.getErrorStream()), "UTF-8") : "";
+                conn.disconnect();
+                Log.w(TAG, "Rufus POST code=" + code + " epc=" + epc + " err=" + err);
+                return false;
+            }
         } catch (Exception e) {
             Log.w(TAG, "Rufus fail: " + e.getMessage());
             return false;
         }
-    }
-
-    private int countLines(File f) {
-        int n = 0;
-        try (BufferedReader r = new BufferedReader(new FileReader(f))) {
-            while (r.readLine() != null) n++;
-        } catch (Exception ignored) {}
-        return n;
     }
 
     private byte[] readAll(java.io.InputStream is) throws Exception {

@@ -36,9 +36,10 @@ public class RufusClient {
     private final CopyOnWriteArrayList<RufusListener> listeners = new CopyOnWriteArrayList<>();
 
     private volatile String status = "Ready";
+    private volatile boolean statusError = false;
 
     public interface RufusListener {
-        void onStatusChanged(String status);
+        void onStatusChanged(String status, boolean error);
     }
 
     public static synchronized RufusClient getInstance() {
@@ -79,6 +80,10 @@ public class RufusClient {
         return status;
     }
 
+    public boolean isStatusError() {
+        return statusError;
+    }
+
     public void addListener(RufusListener listener) {
         if (listener != null && !listeners.contains(listener)) listeners.add(listener);
     }
@@ -88,15 +93,20 @@ public class RufusClient {
     }
 
     private void setStatus(String s) {
+        setStatus(s, false);
+    }
+
+    private void setStatus(String s, boolean error) {
         status = s;
+        statusError = error;
         mainHandler.post(() -> {
-            for (RufusListener l : listeners) l.onStatusChanged(s);
+            for (RufusListener l : listeners) l.onStatusChanged(s, error);
         });
     }
 
     // POST /devices — bind device
     public void bindDevice() {
-        if (!configured) { setStatus("Not configured"); return; }
+        if (!configured) { setStatus("Not configured", true); return; }
         setStatus("Binding…");
         ioExecutor.execute(() -> {
             try {
@@ -111,13 +121,13 @@ public class RufusClient {
                     JSONObject b = resp.getJSONObject("body");
                     deviceId = b.getString("deviceid");
                     Log.i(TAG, "Device bound: " + deviceId);
-                    setStatus("Bound: " + deviceId.substring(0, 8) + "…");
+                    setStatus("Bound: " + abbrev(deviceId));
                 } else {
-                    setStatus("Bind failed");
+                    setStatus("Bind failed", true);
                 }
             } catch (Exception e) {
                 Log.e(TAG, "bindDevice error: " + e.getMessage());
-                setStatus("Bind error");
+                setStatus("Bind error", true);
             }
         });
     }
@@ -125,7 +135,7 @@ public class RufusClient {
     // POST /sessions — create session (only if no active session and device is bound)
     public void createSession() {
         if (tokenSession != null) return;
-        if (!configured || deviceId == null) { setStatus("No device"); return; }
+        if (!configured || deviceId == null) { setStatus("No device", true); return; }
         setStatus("Creating session…");
         ioExecutor.execute(() -> {
             try {
@@ -136,14 +146,14 @@ public class RufusClient {
                 JSONObject resp = doPost("/sessions", body);
                 if (resp != null) {
                     tokenSession = resp.getJSONObject("body").getString("token_session");
-                    Log.i(TAG, "Session created: " + tokenSession);
+                    Log.i(TAG, "Session created: " + abbrev(tokenSession));
                     setStatus("Session active");
                 } else {
-                    setStatus("Session failed");
+                    setStatus("Session failed", true);
                 }
             } catch (Exception e) {
                 Log.e(TAG, "createSession error: " + e.getMessage());
-                setStatus("Session error");
+                setStatus("Session error", true);
             }
         });
     }
@@ -156,12 +166,18 @@ public class RufusClient {
         ioExecutor.execute(() -> {
             try {
                 doPatch("/sessions/close/" + ts, new JSONObject());
-                Log.i(TAG, "Session closed: " + ts);
+                Log.i(TAG, "Session closed: " + abbrev(ts));
                 setStatus("Session closed");
             } catch (Exception e) {
                 Log.e(TAG, "final close error: " + e.getMessage());
             }
         });
+    }
+
+    // first 8 chars only — keeps ids/tokens out of logs and UI
+    private static String abbrev(String s) {
+        if (s == null) return "";
+        return s.length() <= 8 ? s : s.substring(0, 8) + "…";
     }
 
     // --- HTTP helpers ---
