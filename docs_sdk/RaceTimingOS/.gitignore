@@ -1,0 +1,4 @@
+
+# release signing — never commit
+keystore.properties
+app/release.keystore
