@@ -46,6 +46,8 @@ public class UploadManager {
     private static final String WICLAX_TS_FORMAT = "yyyyMMddHHmmssSSS";
     // minutes added to the read time before sending to Wiclax (Settings)
     public static final String KEY_WICLAX_OFFSET_MIN = "wiclax_offset_min";
+    // per-device-ID passing counter: key = prefix + device_id
+    private static final String KEY_SEQ_PREFIX = "wiclax_seq_";
 
     private final AtomicInteger pending = new AtomicInteger(0);
 
@@ -100,7 +102,12 @@ public class UploadManager {
     // Every read is queued (no dedup). The queue line stores the exact read
     // instant as epoch ms, so a passing uploaded later (e.g. after the network
     // comes back) always carries the read time, never the upload time.
-    // Line format: EPC;dd-MM-yyyy HH:mm:ss.SSS;RSSI;epochMs
+    // Line format: EPC;dd-MM-yyyy HH:mm:ss.SSS;RSSI;epochMs;seq
+    //
+    // seq is a per-device-ID passing number (1, 2, 3, ...) that Wiclax shows
+    // in its sequential-number column; a jump of more than 1 is drawn as a red
+    // line, flagging lost passings. It is assigned here, at read time, and
+    // stored with the read so retries and offline backlog keep the same number.
     public void enqueue(String epc, String rssi, long readTimeMs) {
         scheduler.execute(() -> {
             try {
@@ -109,7 +116,8 @@ public class UploadManager {
                 File file = new File(dir, PENDING_FILE);
                 String ts = new SimpleDateFormat(QUEUE_TS_FORMAT, Locale.US).format(new Date(readTimeMs));
                 String safeRssi = rssi != null ? rssi.replace(";", "") : "";
-                String line = epc + ";" + ts + ";" + safeRssi + ";" + readTimeMs + "\r\n";
+                long seq = nextSeq();
+                String line = epc + ";" + ts + ";" + safeRssi + ";" + readTimeMs + ";" + seq + "\r\n";
                 FileOutputStream fos = new FileOutputStream(file, true);
                 fos.write(line.getBytes(StandardCharsets.UTF_8));
                 fos.close();
@@ -119,6 +127,16 @@ public class UploadManager {
             }
             notifyStatus();
         });
+    }
+
+    // Runs on the single scheduler thread only, so no locking is needed.
+    // commit() (not apply) so a crash can't reuse a number already handed out.
+    private long nextSeq() {
+        if (prefs == null) return 0;
+        String key = KEY_SEQ_PREFIX + prefs.getString("device_id", "");
+        long seq = prefs.getLong(key, 0) + 1;
+        prefs.edit().putLong(key, seq).commit();
+        return seq;
     }
 
     // In-memory count, so status updates don't rescan the queue file on every
@@ -172,6 +190,11 @@ public class UploadManager {
                 String queuedTs = parts.length > 1 ? parts[1] : "";
                 String rssi = parts.length > 2 ? parts[2] : "";
                 String epochStr = parts.length > 3 ? parts[3] : "";
+                // 0 = line queued by an older build without a seq field
+                long seq = 0;
+                if (parts.length > 4) {
+                    try { seq = Long.parseLong(parts[4].trim()); } catch (NumberFormatException ignored) {}
+                }
                 if (epc.isEmpty()) { cursor = lineEnd; pending.decrementAndGet(); continue; }
 
                 long readTimeMs = resolveReadTime(epochStr, queuedTs);
@@ -185,7 +208,7 @@ public class UploadManager {
                     continue;
                 }
 
-                if (sendToPlatform(epc, readTimeMs, rssi)) {
+                if (sendToPlatform(epc, readTimeMs, rssi, seq)) {
                     totalSent++;
                     pending.decrementAndGet();
                     cursor = lineEnd;
@@ -241,10 +264,10 @@ public class UploadManager {
         return d != null ? d.getTime() : 0;
     }
 
-    private boolean sendToPlatform(String epc, long readTimeMs, String rssi) {
+    private boolean sendToPlatform(String epc, long readTimeMs, String rssi, long seq) {
         String platform = prefs.getString("selected_platform", "off");
         if ("off".equals(platform)) return true;
-        if ("wiclax".equals(platform)) return sendWiclax(epc, readTimeMs);
+        if ("wiclax".equals(platform)) return sendWiclax(epc, readTimeMs, seq);
         if ("rufus".equals(platform)) {
             if (RufusClient.getInstance().getTokenSession() == null) {
                 RufusClient.getInstance().createSession();
@@ -265,7 +288,7 @@ public class UploadManager {
         }
     }
 
-    private boolean sendWiclax(String epc, long readTimeMs) {
+    private boolean sendWiclax(String epc, long readTimeMs, long seq) {
         String url = prefs.getString("server_url", "http://wiclax.com:35014");
         String user = prefs.getString("user", "");
         String deviceId = prefs.getString("device_id", "");
@@ -283,7 +306,9 @@ public class UploadManager {
         // Relay format "@EPC@yyyyMMddHHmmssSSS" (same as the desktop app). The
         // generic-acquisition ';' line from the Wiclax TCP spec is not what this
         // HTTP relay expects.
-        String passingData = "@" + epc + "@" + ts;
+        // Fields are '@'-separated: SEQ@EPC@TIMESTAMP. Wiclax shows the first
+        // field as the sequential number (it showed 0 when it was empty).
+        String passingData = (seq > 0 ? String.valueOf(seq) : "") + "@" + epc + "@" + ts;
         try {
             String fullUrl = url + "?user=" + URLEncoder.encode(user, "UTF-8")
                     + "&deviceId=" + URLEncoder.encode(deviceId, "UTF-8")
