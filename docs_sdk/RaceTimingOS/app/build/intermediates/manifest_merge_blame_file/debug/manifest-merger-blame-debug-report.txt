@@ -48,7 +48,7 @@
 25-->[androidx.core:core:1.13.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\c1c1b4f844f2da99d4b95162d7d36c40\transformed\core-1.13.0\AndroidManifest.xml:26:22-94
 26
 27    <application
-27-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:10:5-44:19
+27-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:10:5-46:19
 28        android:name="com.tas.racetiming.AppContext"
 28-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:11:9-35
 29        android:allowBackup="true"
@@ -68,116 +68,120 @@
 37        android:theme="@style/Theme.RaceTimingOS" >
 37-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:15:9-50
 38        <activity
-38-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:19:9-27:20
+38-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:19:9-28:20
 39            android:name="com.tas.racetiming.SplashActivity"
 39-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:20:13-43
 40            android:exported="true"
 40-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:21:13-36
-41            android:theme="@style/Theme.RaceTimingOS.Splash" >
-41-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:22:13-61
-42            <intent-filter>
-42-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:23:13-26:29
-43                <action android:name="android.intent.action.MAIN" />
-43-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:24:17-69
-43-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:24:25-66
-44
-45                <category android:name="android.intent.category.LAUNCHER" />
-45-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:25:17-77
-45-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:25:27-74
-46            </intent-filter>
-47        </activity>
-48        <activity
-48-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:29:9-33:58
-49            android:name="com.tas.racetiming.MainActivity"
-49-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:30:13-41
-50            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
-50-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:32:13-87
-51            android:exported="true"
-51-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:31:13-36
-52            android:windowSoftInputMode="adjustResize" />
-52-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:33:13-55
-53
-54        <provider
-55            android:name="androidx.core.content.FileProvider"
-55-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:36:13-62
-56            android:authorities="com.tas.racetiming.fileprovider"
-56-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:37:13-64
-57            android:exported="false"
-57-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:38:13-37
-58            android:grantUriPermissions="true" >
-58-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:39:13-47
-59            <meta-data
-59-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:40:13-42:54
-60                android:name="android.support.FILE_PROVIDER_PATHS"
-60-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:41:17-67
-61                android:resource="@xml/file_paths" />
-61-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:42:17-51
-62        </provider>
-63        <provider
-63-->[androidx.emoji2:emoji2:1.3.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\822dbdffe73e4ce58dd6ce5277e5eb82\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
-64            android:name="androidx.startup.InitializationProvider"
-64-->[androidx.emoji2:emoji2:1.3.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\822dbdffe73e4ce58dd6ce5277e5eb82\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
-65            android:authorities="com.tas.racetiming.androidx-startup"
-65-->[androidx.emoji2:emoji2:1.3.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\822dbdffe73e4ce58dd6ce5277e5eb82\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
-66            android:exported="false" >
-66-->[androidx.emoji2:emoji2:1.3.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\822dbdffe73e4ce58dd6ce5277e5eb82\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37
-67            <meta-data
-67-->[androidx.emoji2:emoji2:1.3.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\822dbdffe73e4ce58dd6ce5277e5eb82\transformed\emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
-68                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-68-->[androidx.emoji2:emoji2:1.3.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\822dbdffe73e4ce58dd6ce5277e5eb82\transformed\emoji2-1.3.0\AndroidManifest.xml:30:17-75
-69                android:value="androidx.startup" />
-69-->[androidx.emoji2:emoji2:1.3.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\822dbdffe73e4ce58dd6ce5277e5eb82\transformed\emoji2-1.3.0\AndroidManifest.xml:31:17-49
-70            <meta-data
-70-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\46a1331dd75cc60284dddddb1d8da918\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:29:13-31:52
-71                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-71-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\46a1331dd75cc60284dddddb1d8da918\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:30:17-78
-72                android:value="androidx.startup" />
-72-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\46a1331dd75cc60284dddddb1d8da918\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:31:17-49
-73            <meta-data
-73-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
-74                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-74-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
-75                android:value="androidx.startup" />
-75-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
-76        </provider>
-77
-78        <receiver
-78-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
-79            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-79-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
-80            android:directBootAware="false"
-80-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
-81            android:enabled="true"
-81-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
-82            android:exported="true"
-82-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
-83            android:permission="android.permission.DUMP" >
-83-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
-84            <intent-filter>
-84-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
-85                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-85-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
-85-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
-86            </intent-filter>
-87            <intent-filter>
-87-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
-88                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-88-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
-88-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
-89            </intent-filter>
-90            <intent-filter>
-90-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
-91                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-91-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
-91-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
-92            </intent-filter>
-93            <intent-filter>
-93-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
-94                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-94-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
-94-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:25-92
-95            </intent-filter>
-96        </receiver>
-97    </application>
-98
-99</manifest>
+41            android:screenOrientation="portrait"
+41-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:22:13-49
+42            android:theme="@style/Theme.RaceTimingOS.Splash" >
+42-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:23:13-61
+43            <intent-filter>
+43-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:24:13-27:29
+44                <action android:name="android.intent.action.MAIN" />
+44-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:25:17-69
+44-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:25:25-66
+45
+46                <category android:name="android.intent.category.LAUNCHER" />
+46-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:26:17-77
+46-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:26:27-74
+47            </intent-filter>
+48        </activity>
+49        <activity
+49-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:30:9-35:58
+50            android:name="com.tas.racetiming.MainActivity"
+50-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:31:13-41
+51            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+51-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:34:13-87
+52            android:exported="true"
+52-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:32:13-36
+53            android:screenOrientation="portrait"
+53-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:33:13-49
+54            android:windowSoftInputMode="adjustResize" />
+54-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:35:13-55
+55
+56        <provider
+57            android:name="androidx.core.content.FileProvider"
+57-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:38:13-62
+58            android:authorities="com.tas.racetiming.fileprovider"
+58-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:39:13-64
+59            android:exported="false"
+59-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:40:13-37
+60            android:grantUriPermissions="true" >
+60-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:41:13-47
+61            <meta-data
+61-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:42:13-44:54
+62                android:name="android.support.FILE_PROVIDER_PATHS"
+62-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:43:17-67
+63                android:resource="@xml/file_paths" />
+63-->D:\c72\docs_sdk\RaceTimingOS\app\src\main\AndroidManifest.xml:44:17-51
+64        </provider>
+65        <provider
+65-->[androidx.emoji2:emoji2:1.3.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\822dbdffe73e4ce58dd6ce5277e5eb82\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
+66            android:name="androidx.startup.InitializationProvider"
+66-->[androidx.emoji2:emoji2:1.3.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\822dbdffe73e4ce58dd6ce5277e5eb82\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
+67            android:authorities="com.tas.racetiming.androidx-startup"
+67-->[androidx.emoji2:emoji2:1.3.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\822dbdffe73e4ce58dd6ce5277e5eb82\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
+68            android:exported="false" >
+68-->[androidx.emoji2:emoji2:1.3.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\822dbdffe73e4ce58dd6ce5277e5eb82\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37
+69            <meta-data
+69-->[androidx.emoji2:emoji2:1.3.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\822dbdffe73e4ce58dd6ce5277e5eb82\transformed\emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
+70                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+70-->[androidx.emoji2:emoji2:1.3.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\822dbdffe73e4ce58dd6ce5277e5eb82\transformed\emoji2-1.3.0\AndroidManifest.xml:30:17-75
+71                android:value="androidx.startup" />
+71-->[androidx.emoji2:emoji2:1.3.0] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\822dbdffe73e4ce58dd6ce5277e5eb82\transformed\emoji2-1.3.0\AndroidManifest.xml:31:17-49
+72            <meta-data
+72-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\46a1331dd75cc60284dddddb1d8da918\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:29:13-31:52
+73                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+73-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\46a1331dd75cc60284dddddb1d8da918\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:30:17-78
+74                android:value="androidx.startup" />
+74-->[androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\46a1331dd75cc60284dddddb1d8da918\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:31:17-49
+75            <meta-data
+75-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
+76                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+76-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
+77                android:value="androidx.startup" />
+77-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
+78        </provider>
+79
+80        <receiver
+80-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
+81            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+81-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
+82            android:directBootAware="false"
+82-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
+83            android:enabled="true"
+83-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
+84            android:exported="true"
+84-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
+85            android:permission="android.permission.DUMP" >
+85-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
+86            <intent-filter>
+86-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
+87                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+87-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
+87-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
+88            </intent-filter>
+89            <intent-filter>
+89-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
+90                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+90-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
+90-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
+91            </intent-filter>
+92            <intent-filter>
+92-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
+93                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+93-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
+93-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
+94            </intent-filter>
+95            <intent-filter>
+95-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
+96                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+96-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
+96-->[androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\TanvirAhmed\.gradle\caches\transforms-3\3d2e31f5710a8c99374271ca6891b4a1\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:25-92
+97            </intent-filter>
+98        </receiver>
+99    </application>
+100
+101</manifest>

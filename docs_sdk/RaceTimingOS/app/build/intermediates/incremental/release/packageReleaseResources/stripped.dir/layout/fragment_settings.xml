@@ -296,6 +296,29 @@
                 android:hint="C72-SN-001"
                 android:layout_marginBottom="@dimen/stack_sm"/>
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Wiclax time offset (minutes, + or -)"
+                android:textColor="@color/on_surface_variant"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="@dimen/base"/>
+
+            <EditText
+                android:id="@+id/et_wiclax_offset"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/touch_target_min"
+                android:inputType="numberSigned"
+                android:paddingLeft="@dimen/gutter"
+                android:paddingRight="@dimen/gutter"
+                android:background="@color/surface_container_lowest"
+                android:textColor="@color/on_surface"
+                android:textSize="@dimen/body_lg_text_size"
+                android:hint="0"
+                android:layout_marginBottom="@dimen/stack_sm"/>
+
             <Button
                 android:id="@+id/btn_save"
                 android:layout_width="match_parent"

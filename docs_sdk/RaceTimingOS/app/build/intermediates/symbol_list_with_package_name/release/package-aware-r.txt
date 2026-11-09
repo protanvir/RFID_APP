@@ -3349,6 +3349,7 @@ id et_rufus_api_key
 id et_rufus_serial
 id et_server_url
 id et_user
+id et_wiclax_offset
 id exitUntilCollapsed
 id expand_activities_button
 id expanded_menu
@@ -3668,7 +3669,6 @@ id tv_rufus_status
 id tv_rufus_status_dot
 id tv_send_counts
 id tv_send_status
-id tv_session_timer
 id tv_status_dot
 id tv_total_reads
 id tv_unique_tags

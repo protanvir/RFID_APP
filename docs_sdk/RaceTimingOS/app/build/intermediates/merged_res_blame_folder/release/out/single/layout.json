@@ -1,7 +1,11 @@
 [
     {
-        "merged": "com.tas.racetiming.app-mergeReleaseResources-31:/layout/activity_splash.xml",
-        "source": "com.tas.racetiming.app-main-33:/layout/activity_splash.xml"
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-mergeReleaseResources-31:\\layout\\activity_splash.xml",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-33:\\layout\\activity_splash.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-mergeReleaseResources-31:\\layout\\fragment_settings.xml",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-33:\\layout\\fragment_settings.xml"
     },
     {
         "merged": "com.tas.racetiming.app-mergeReleaseResources-31:/layout/fragment_dashboard.xml",
@@ -12,7 +16,11 @@
         "source": "com.tas.racetiming.app-main-33:/layout/fragment_settings.xml"
     },
     {
-        "merged": "com.tas.racetiming.app-mergeReleaseResources-31:/layout/activity_main.xml",
-        "source": "com.tas.racetiming.app-main-33:/layout/activity_main.xml"
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-mergeReleaseResources-31:\\layout\\activity_main.xml",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-33:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-mergeReleaseResources-31:\\layout\\fragment_dashboard.xml",
+        "source": "C:\\Users\\TanvirAhmed\\.gradle\\daemon\\8.2\\com.tas.racetiming.app-main-33:\\layout\\fragment_dashboard.xml"
     }
 ]

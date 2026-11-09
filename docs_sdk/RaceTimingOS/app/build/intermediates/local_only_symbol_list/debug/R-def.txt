@@ -77,6 +77,7 @@ id et_rufus_api_key
 id et_rufus_serial
 id et_server_url
 id et_user
+id et_wiclax_offset
 id feed_list
 id iv_logo
 id nav_dashboard
@@ -99,7 +100,6 @@ id tv_rufus_status
 id tv_rufus_status_dot
 id tv_send_counts
 id tv_send_status
-id tv_session_timer
 id tv_status_dot
 id tv_total_reads
 id tv_unique_tags

@@ -5,7 +5,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -19,7 +18,7 @@ import java.lang.String;
 
 public final class FragmentDashboardBinding implements ViewBinding {
   @NonNull
-  private final FrameLayout rootView;
+  private final LinearLayout rootView;
 
   @NonNull
   public final Button btnClear;
@@ -46,9 +45,6 @@ public final class FragmentDashboardBinding implements ViewBinding {
   public final TextView tvSendStatus;
 
   @NonNull
-  public final TextView tvSessionTimer;
-
-  @NonNull
   public final TextView tvTotalReads;
 
   @NonNull
@@ -57,12 +53,11 @@ public final class FragmentDashboardBinding implements ViewBinding {
   @NonNull
   public final View vStatusDot;
 
-  private FragmentDashboardBinding(@NonNull FrameLayout rootView, @NonNull Button btnClear,
+  private FragmentDashboardBinding(@NonNull LinearLayout rootView, @NonNull Button btnClear,
       @NonNull Button btnDownloadCsv, @NonNull Button btnScan, @NonNull LinearLayout cardTotalReads,
       @NonNull LinearLayout cardUniqueTags, @NonNull LinearLayout feedList,
       @NonNull TextView tvSendCounts, @NonNull TextView tvSendStatus,
-      @NonNull TextView tvSessionTimer, @NonNull TextView tvTotalReads,
-      @NonNull TextView tvUniqueTags, @NonNull View vStatusDot) {
+      @NonNull TextView tvTotalReads, @NonNull TextView tvUniqueTags, @NonNull View vStatusDot) {
     this.rootView = rootView;
     this.btnClear = btnClear;
     this.btnDownloadCsv = btnDownloadCsv;
@@ -72,7 +67,6 @@ public final class FragmentDashboardBinding implements ViewBinding {
     this.feedList = feedList;
     this.tvSendCounts = tvSendCounts;
     this.tvSendStatus = tvSendStatus;
-    this.tvSessionTimer = tvSessionTimer;
     this.tvTotalReads = tvTotalReads;
     this.tvUniqueTags = tvUniqueTags;
     this.vStatusDot = vStatusDot;
@@ -80,7 +74,7 @@ public final class FragmentDashboardBinding implements ViewBinding {
 
   @Override
   @NonNull
-  public FrameLayout getRoot() {
+  public LinearLayout getRoot() {
     return rootView;
   }
 
@@ -153,12 +147,6 @@ public final class FragmentDashboardBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.tv_session_timer;
-      TextView tvSessionTimer = ViewBindings.findChildViewById(rootView, id);
-      if (tvSessionTimer == null) {
-        break missingId;
-      }
-
       id = R.id.tv_total_reads;
       TextView tvTotalReads = ViewBindings.findChildViewById(rootView, id);
       if (tvTotalReads == null) {
@@ -177,8 +165,8 @@ public final class FragmentDashboardBinding implements ViewBinding {
         break missingId;
       }
 
-      return new FragmentDashboardBinding((FrameLayout) rootView, btnClear, btnDownloadCsv, btnScan,
-          cardTotalReads, cardUniqueTags, feedList, tvSendCounts, tvSendStatus, tvSessionTimer,
+      return new FragmentDashboardBinding((LinearLayout) rootView, btnClear, btnDownloadCsv,
+          btnScan, cardTotalReads, cardUniqueTags, feedList, tvSendCounts, tvSendStatus,
           tvTotalReads, tvUniqueTags, vStatusDot);
     }
     String missingId = rootView.getResources().getResourceName(id);

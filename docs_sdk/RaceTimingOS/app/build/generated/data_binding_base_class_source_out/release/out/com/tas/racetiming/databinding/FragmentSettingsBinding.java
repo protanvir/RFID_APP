@@ -54,6 +54,9 @@ public final class FragmentSettingsBinding implements ViewBinding {
   public final EditText etUser;
 
   @NonNull
+  public final EditText etWiclaxOffset;
+
+  @NonNull
   public final RadioButton rbPlatformOff;
 
   @NonNull
@@ -105,14 +108,15 @@ public final class FragmentSettingsBinding implements ViewBinding {
       @NonNull Button btnSave, @NonNull EditText etDeviceId, @NonNull EditText etEpcPrefix,
       @NonNull EditText etRufusAlias, @NonNull EditText etRufusApiKey,
       @NonNull EditText etRufusSerial, @NonNull EditText etServerUrl, @NonNull EditText etUser,
-      @NonNull RadioButton rbPlatformOff, @NonNull RadioButton rbPlatformRufus,
-      @NonNull RadioButton rbPlatformWiclax, @NonNull RadioGroup rgPlatform,
-      @NonNull LinearLayout rufusConfigSection, @NonNull SeekBar sbPower,
-      @NonNull SwitchCompat switchEpcFilter, @NonNull TextView tvBatteryHealth,
-      @NonNull TextView tvConnectionStatus, @NonNull TextView tvModuleTemp,
-      @NonNull TextView tvPowerLabel, @NonNull TextView tvPowerValue,
-      @NonNull TextView tvRufusStatus, @NonNull TextView tvRufusStatusDot,
-      @NonNull TextView tvStatusDot, @NonNull LinearLayout wiclaxConfigSection) {
+      @NonNull EditText etWiclaxOffset, @NonNull RadioButton rbPlatformOff,
+      @NonNull RadioButton rbPlatformRufus, @NonNull RadioButton rbPlatformWiclax,
+      @NonNull RadioGroup rgPlatform, @NonNull LinearLayout rufusConfigSection,
+      @NonNull SeekBar sbPower, @NonNull SwitchCompat switchEpcFilter,
+      @NonNull TextView tvBatteryHealth, @NonNull TextView tvConnectionStatus,
+      @NonNull TextView tvModuleTemp, @NonNull TextView tvPowerLabel,
+      @NonNull TextView tvPowerValue, @NonNull TextView tvRufusStatus,
+      @NonNull TextView tvRufusStatusDot, @NonNull TextView tvStatusDot,
+      @NonNull LinearLayout wiclaxConfigSection) {
     this.rootView = rootView;
     this.btnBindRufus = btnBindRufus;
     this.btnSave = btnSave;
@@ -123,6 +127,7 @@ public final class FragmentSettingsBinding implements ViewBinding {
     this.etRufusSerial = etRufusSerial;
     this.etServerUrl = etServerUrl;
     this.etUser = etUser;
+    this.etWiclaxOffset = etWiclaxOffset;
     this.rbPlatformOff = rbPlatformOff;
     this.rbPlatformRufus = rbPlatformRufus;
     this.rbPlatformWiclax = rbPlatformWiclax;
@@ -219,6 +224,12 @@ public final class FragmentSettingsBinding implements ViewBinding {
       id = R.id.et_user;
       EditText etUser = ViewBindings.findChildViewById(rootView, id);
       if (etUser == null) {
+        break missingId;
+      }
+
+      id = R.id.et_wiclax_offset;
+      EditText etWiclaxOffset = ViewBindings.findChildViewById(rootView, id);
+      if (etWiclaxOffset == null) {
         break missingId;
       }
 
@@ -320,9 +331,10 @@ public final class FragmentSettingsBinding implements ViewBinding {
 
       return new FragmentSettingsBinding((ScrollView) rootView, btnBindRufus, btnSave, etDeviceId,
           etEpcPrefix, etRufusAlias, etRufusApiKey, etRufusSerial, etServerUrl, etUser,
-          rbPlatformOff, rbPlatformRufus, rbPlatformWiclax, rgPlatform, rufusConfigSection, sbPower,
-          switchEpcFilter, tvBatteryHealth, tvConnectionStatus, tvModuleTemp, tvPowerLabel,
-          tvPowerValue, tvRufusStatus, tvRufusStatusDot, tvStatusDot, wiclaxConfigSection);
+          etWiclaxOffset, rbPlatformOff, rbPlatformRufus, rbPlatformWiclax, rgPlatform,
+          rufusConfigSection, sbPower, switchEpcFilter, tvBatteryHealth, tvConnectionStatus,
+          tvModuleTemp, tvPowerLabel, tvPowerValue, tvRufusStatus, tvRufusStatusDot, tvStatusDot,
+          wiclaxConfigSection);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));
