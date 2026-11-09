@@ -35,7 +35,9 @@ import java.util.LinkedList;
 
 public class DashboardFragment extends Fragment {
 
-    private TextView tvTimer, tvTotalReads, tvUniqueTags, tvSendStatus, tvSendCounts;
+    private TextView tvTotalReads, tvUniqueTags, tvSendStatus, tvSendCounts;
+    // rows kept in the live feed (feed now fills the screen and scrolls)
+    private static final int FEED_MAX_ROWS = 50;
     private Button btnScan, btnClear, btnDownloadCsv;
     private LinearLayout feedList;
     private View statusDot;
@@ -53,7 +55,6 @@ public class DashboardFragment extends Fragment {
     private final Runnable timerRunnable = new Runnable() {
         @Override
         public void run() {
-            tvTimer.setText(session.getElapsedTimeFormatted());
             tvTotalReads.setText(String.valueOf(session.getTotalReads()));
             tvUniqueTags.setText(String.valueOf(session.getUniqueTagCount()));
             timerHandler.postDelayed(this, 1000);
@@ -64,7 +65,6 @@ public class DashboardFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_dashboard, container, false);
 
-        tvTimer = view.findViewById(R.id.tv_session_timer);
         tvTotalReads = view.findViewById(R.id.tv_total_reads);
         tvUniqueTags = view.findViewById(R.id.tv_unique_tags);
         btnScan = view.findViewById(R.id.btn_scan);
@@ -75,11 +75,11 @@ public class DashboardFragment extends Fragment {
         tvSendStatus = view.findViewById(R.id.tv_send_status);
         tvSendCounts = view.findViewById(R.id.tv_send_counts);
 
-        toneGenerator = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80);
-
         btnScan.setOnClickListener(v -> onScanClick());
         btnClear.setOnClickListener(v -> clearReads());
         btnDownloadCsv.setOnClickListener(v -> shareCsv());
+
+        toneGenerator = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80);
 
         updateScanButton(false);
 
@@ -152,7 +152,7 @@ public class DashboardFragment extends Fragment {
         String time = android.text.format.DateFormat.format("HH:mm:ss.S", readTimeMs).toString();
         TagRead read = new TagRead(epc, time, rssi);
         recentReads.addFirst(read);
-        if (recentReads.size() > 20) recentReads.removeLast();
+        if (recentReads.size() > FEED_MAX_ROWS) recentReads.removeLast();
         scheduleFeedRender();
         playBeep();
         FileUtils.writeTagToCsv(epc, rssi, readTimeMs);
@@ -250,7 +250,7 @@ public class DashboardFragment extends Fragment {
             feedList.removeAllViews();
             int count = 0;
             for (TagRead read : recentReads) {
-                if (count++ >= 20) break;
+                if (count++ >= FEED_MAX_ROWS) break;
                 LinearLayout rowLayout = new LinearLayout(getContext());
                 rowLayout.setOrientation(LinearLayout.HORIZONTAL);
                 rowLayout.setPadding(16, 16, 16, 16);
