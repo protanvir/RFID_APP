@@ -146,17 +146,17 @@ public class DashboardFragment extends Fragment {
         }
     }
 
-    private void onTagRead(String epc, String rssi, String user) {
+    private void onTagRead(String epc, String rssi, String user, long readTimeMs) {
         Log.i("TAG_READ", "epc=" + epc + " rssi=" + rssi + " user=" + user);
         session.incrementReads(epc);
-        String time = android.text.format.DateFormat.format("HH:mm:ss.S", System.currentTimeMillis()).toString();
+        String time = android.text.format.DateFormat.format("HH:mm:ss.S", readTimeMs).toString();
         TagRead read = new TagRead(epc, time, rssi);
         recentReads.addFirst(read);
         if (recentReads.size() > 20) recentReads.removeLast();
         scheduleFeedRender();
         playBeep();
-        FileUtils.writeTagToCsv(epc, rssi);
-        UploadManager.getInstance().enqueue(epc, rssi);
+        FileUtils.writeTagToCsv(epc, rssi, readTimeMs);
+        UploadManager.getInstance().enqueue(epc, rssi, readTimeMs);
     }
 
     private boolean hasStorageAccess() {

@@ -26,7 +26,8 @@ public class UHFManager {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public interface TagCallback {
-        void onTagRead(String epc, String rssi, String user);
+        // readTimeMs: wall-clock time the SDK reported the tag (epoch ms)
+        void onTagRead(String epc, String rssi, String user, long readTimeMs);
     }
 
     public static synchronized UHFManager getInstance() {
@@ -99,6 +100,9 @@ public class UHFManager {
         reader.setInventoryCallback(new IUHFInventoryCallback() {
             @Override
             public void callback(UHFTAGInfo uhftagInfo) {
+                // stamp the read here, on the SDK thread, before the main-thread
+                // hop, so UI/queue delays never shift the passing time
+                final long readTimeMs = System.currentTimeMillis();
                 if (uhftagInfo == null || tagCallback == null) return;
                 String epc = uhftagInfo.getEPC();
                 String rssi = uhftagInfo.getRssi();
@@ -111,7 +115,7 @@ public class UHFManager {
                 final String userFinal = user != null ? user : "";
                 mainHandler.post(() -> {
                     if (tagCallback != null) {
-                        tagCallback.onTagRead(epcFinal, rssiFinal, userFinal);
+                        tagCallback.onTagRead(epcFinal, rssiFinal, userFinal, readTimeMs);
                     }
                 });
             }

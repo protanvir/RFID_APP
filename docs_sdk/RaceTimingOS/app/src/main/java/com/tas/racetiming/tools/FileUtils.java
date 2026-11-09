@@ -33,8 +33,8 @@ public class FileUtils {
         }
     }
 
-    public static void writeTagToCsv(String epc, String rssi) {
-        final Date readTime = new Date(); // capture at read time, not when the task runs
+    public static void writeTagToCsv(String epc, String rssi, long readTimeMs) {
+        final Date readTime = new Date(readTimeMs); // time the reader saw the tag
         ioExecutor.execute(() -> writeTagLine(epc, rssi, readTime));
     }
 

@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -18,6 +19,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.rscja.scanner.utility.ScannerUtility;
 import com.tas.racetiming.network.WiclaxClient;
 import com.tas.racetiming.ui.dashboard.DashboardFragment;
 import com.tas.racetiming.ui.settings.SettingsFragment;
@@ -107,6 +109,30 @@ public class MainActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
             }
+        }
+    }
+
+    // The system Keyboard Emulator (com.rscja.scanner) listens to the scan
+    // trigger globally and fires the barcode/QR engine. Close it while this
+    // app is in front so the trigger only drives our RFID inventory, and
+    // restore it when leaving so other apps keep their scan key.
+    @Override
+    protected void onResume() {
+        super.onResume();
+        try {
+            ScannerUtility.getScannerInerface().close(this);
+        } catch (Throwable t) {
+            Log.w("MainActivity", "Keyboard emulator close failed: " + t.getMessage());
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        try {
+            ScannerUtility.getScannerInerface().open(this);
+        } catch (Throwable t) {
+            Log.w("MainActivity", "Keyboard emulator open failed: " + t.getMessage());
         }
     }
 

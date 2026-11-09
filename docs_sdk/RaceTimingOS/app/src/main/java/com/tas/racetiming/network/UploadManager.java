@@ -40,7 +40,14 @@ public class UploadManager {
     private final CopyOnWriteArrayList<UploadListener> listeners = new CopyOnWriteArrayList<>();
     private final AtomicInteger passingCounter = new AtomicInteger(0);
 
-    private static final long MAX_BACKOFF_MS = 60_000;
+    // capped low: during a race a long backoff delays every queued passing
+    private static final long MAX_BACKOFF_MS = 15_000;
+    // Wiclax relay timestamp: yyyyMMddHHmmssSSS
+    private static final String WICLAX_TS_FORMAT = "yyyyMMddHHmmssSSS";
+    // minutes added to the read time before sending to Wiclax (Settings)
+    public static final String KEY_WICLAX_OFFSET_MIN = "wiclax_offset_min";
+
+    private final AtomicInteger pending = new AtomicInteger(0);
 
     private SharedPreferences prefs;
     private volatile boolean running = false;
@@ -65,6 +72,7 @@ public class UploadManager {
         this.prefs = prefs;
         File dir = new File(BASE_DIR);
         if (!dir.exists()) dir.mkdirs();
+        scheduler.execute(() -> pending.set(countPendingInFile()));
     }
 
     public void addListener(UploadListener l) {
@@ -89,18 +97,23 @@ public class UploadManager {
         }
     }
 
-    public void enqueue(String epc, String rssi) {
-        final Date readTime = new Date(); // capture at read time, not when the task runs
+    // Every read is queued (no dedup). The queue line stores the exact read
+    // instant as epoch ms, so a passing uploaded later (e.g. after the network
+    // comes back) always carries the read time, never the upload time.
+    // Line format: EPC;dd-MM-yyyy HH:mm:ss.SSS;RSSI;epochMs
+    public void enqueue(String epc, String rssi, long readTimeMs) {
         scheduler.execute(() -> {
             try {
                 File dir = new File(BASE_DIR);
                 if (!dir.exists()) dir.mkdirs();
                 File file = new File(dir, PENDING_FILE);
-                String ts = new SimpleDateFormat(QUEUE_TS_FORMAT, Locale.US).format(readTime);
-                String line = epc + ";" + ts + ";" + rssi + "\r\n";
+                String ts = new SimpleDateFormat(QUEUE_TS_FORMAT, Locale.US).format(new Date(readTimeMs));
+                String safeRssi = rssi != null ? rssi.replace(";", "") : "";
+                String line = epc + ";" + ts + ";" + safeRssi + ";" + readTimeMs + "\r\n";
                 FileOutputStream fos = new FileOutputStream(file, true);
                 fos.write(line.getBytes(StandardCharsets.UTF_8));
                 fos.close();
+                pending.incrementAndGet();
             } catch (Exception e) {
                 Log.e(TAG, "enqueue error: " + e.getMessage());
             }
@@ -108,7 +121,13 @@ public class UploadManager {
         });
     }
 
+    // In-memory count, so status updates don't rescan the queue file on every
+    // tag read (that scan ran on the upload thread and delayed sending)
     public int pendingCount() {
+        return Math.max(0, pending.get());
+    }
+
+    private int countPendingInFile() {
         File f = new File(BASE_DIR + PENDING_FILE);
         if (!f.exists()) return 0;
         long cursor = prefs != null ? prefs.getLong(KEY_CURSOR, 0) : 0;
@@ -148,14 +167,27 @@ public class UploadManager {
                 line = line.trim();
                 if (line.isEmpty()) { cursor = lineEnd; continue; }
 
-                String[] parts = line.split(";", 3);
+                String[] parts = line.split(";");
                 String epc = parts.length > 0 ? parts[0] : "";
                 String queuedTs = parts.length > 1 ? parts[1] : "";
                 String rssi = parts.length > 2 ? parts[2] : "";
-                if (epc.isEmpty()) { cursor = lineEnd; continue; }
+                String epochStr = parts.length > 3 ? parts[3] : "";
+                if (epc.isEmpty()) { cursor = lineEnd; pending.decrementAndGet(); continue; }
 
-                if (sendToPlatform(epc, queuedTs, rssi)) {
+                long readTimeMs = resolveReadTime(epochStr, queuedTs);
+                if (readTimeMs <= 0) {
+                    // never substitute the upload time: a wrong passing time is
+                    // worse than a missing one (the raw read is still in the CSV)
+                    Log.e(TAG, "skip queue line with no valid read time: " + line);
+                    cursor = lineEnd;
+                    pending.decrementAndGet();
+                    prefs.edit().putLong(KEY_CURSOR, cursor).apply();
+                    continue;
+                }
+
+                if (sendToPlatform(epc, readTimeMs, rssi)) {
                     totalSent++;
+                    pending.decrementAndGet();
                     cursor = lineEnd;
                     prefs.edit().putLong(KEY_CURSOR, cursor).apply();
                 } else {
@@ -184,6 +216,7 @@ public class UploadManager {
         long fileLen = f.length();
         if (fileLen > 0 && cursor >= fileLen) {
             f.delete();
+            pending.set(0);
             prefs.edit().putLong(KEY_CURSOR, 0).apply();
             notifyStatus(totalSent, 0);
         }
@@ -195,16 +228,29 @@ public class UploadManager {
         }
     }
 
-    private boolean sendToPlatform(String epc, String queuedTs, String rssi) {
+    // epoch ms field (new lines); falls back to the formatted timestamp for
+    // lines queued by older builds. Returns 0 if neither is usable.
+    private long resolveReadTime(String epochStr, String queuedTs) {
+        if (epochStr != null && !epochStr.isEmpty()) {
+            try {
+                long v = Long.parseLong(epochStr.trim());
+                if (v > 0) return v;
+            } catch (NumberFormatException ignored) {}
+        }
+        Date d = parseQueuedTs(queuedTs);
+        return d != null ? d.getTime() : 0;
+    }
+
+    private boolean sendToPlatform(String epc, long readTimeMs, String rssi) {
         String platform = prefs.getString("selected_platform", "off");
         if ("off".equals(platform)) return true;
-        if ("wiclax".equals(platform)) return sendWiclax(epc, queuedTs);
+        if ("wiclax".equals(platform)) return sendWiclax(epc, readTimeMs);
         if ("rufus".equals(platform)) {
             if (RufusClient.getInstance().getTokenSession() == null) {
                 RufusClient.getInstance().createSession();
                 return false; // will retry next cycle when session is ready
             }
-            return sendRufus(epc, queuedTs);
+            return sendRufus(epc, readTimeMs);
         }
         return true;
     }
@@ -219,29 +265,61 @@ public class UploadManager {
         }
     }
 
-    private boolean sendWiclax(String epc, String queuedTs) {
+    private boolean sendWiclax(String epc, long readTimeMs) {
         String url = prefs.getString("server_url", "http://wiclax.com:35014");
         String user = prefs.getString("user", "");
         String deviceId = prefs.getString("device_id", "");
-        if (user.isEmpty() || deviceId.isEmpty()) return true;
+        if (user.isEmpty() || deviceId.isEmpty()) {
+            Log.w(TAG, "Wiclax skip: user/deviceId not set, passing dropped epc=" + epc);
+            return true;
+        }
 
-        Date readTime = parseQueuedTs(queuedTs);
-        String ts = new SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.US)
-                .format(readTime != null ? readTime : new Date());
+        // Wiclax interprets the timestamp in its own event/PC timezone. If that
+        // differs from the device's (e.g. device UTC+6:00, Wiclax UTC+5:30) the
+        // passing shows shifted, so apply the configured offset in minutes.
+        int offsetMin = prefs.getInt(KEY_WICLAX_OFFSET_MIN, 0);
+        long sendMs = readTimeMs + offsetMin * 60_000L;
+        String ts = new SimpleDateFormat(WICLAX_TS_FORMAT, Locale.US).format(new Date(sendMs));
+        // Relay format "@EPC@yyyyMMddHHmmssSSS" (same as the desktop app). The
+        // generic-acquisition ';' line from the Wiclax TCP spec is not what this
+        // HTTP relay expects.
         String passingData = "@" + epc + "@" + ts;
         try {
             String fullUrl = url + "?user=" + URLEncoder.encode(user, "UTF-8")
                     + "&deviceId=" + URLEncoder.encode(deviceId, "UTF-8")
-                    + "&passings=" + URLEncoder.encode(passingData, "UTF-8");
+                    // %20 not '+': the timestamp has a space and not every
+                    // server decodes '+' as space in the query string
+                    + "&passings=" + URLEncoder.encode(passingData, "UTF-8").replace("+", "%20");
             HttpURLConnection conn = (HttpURLConnection) new URL(fullUrl).openConnection();
             conn.setRequestMethod("GET");
             conn.setConnectTimeout(8000);
             conn.setReadTimeout(8000);
             int code = conn.getResponseCode();
-            conn.disconnect();
-            Log.i(TAG, "Wiclax code=" + code + " epc=" + epc);
-            boolean ok = code >= 200 && code < 300;
-            WiclaxClient.getInstance().reportSendResult(ok, ok ? "Sent (" + code + ")" : "HTTP " + code);
+            // Drain the body: HttpURLConnection only returns the socket to the
+            // keep-alive pool once the response is fully read. Without this every
+            // passing paid a fresh TCP connect (~600 ms per send).
+            String body = "";
+            try {
+                java.io.InputStream is = code >= 400 ? conn.getErrorStream() : conn.getInputStream();
+                if (is != null) {
+                    body = new String(readAll(is), StandardCharsets.UTF_8).trim();
+                    is.close();
+                }
+            } catch (Exception ignored) {}
+            if (body.length() > 120) body = body.substring(0, 120);
+            Log.i(TAG, "Wiclax code=" + code + " passing=" + passingData + " resp=" + body);
+            // The relay answers HTTP 200 even when it rejects a passing, with a
+            // body like "error: invalid user account or device ID" (verified on
+            // the Wiclax pointages page: such passings are not recorded). Treat a
+            // body error as a failure so the passing stays queued and retries
+            // with backoff, and show the reason in the status.
+            boolean bodyError = body.toLowerCase(Locale.US).startsWith("error");
+            boolean ok = code >= 200 && code < 300 && !bodyError;
+            if (bodyError) Log.w(TAG, "Wiclax rejected passing: " + body);
+            String info = ok ? "Sent (" + code + ")"
+                    : bodyError ? "Wiclax: " + body.substring(body.indexOf(':') + 1).trim()
+                    : "HTTP " + code;
+            WiclaxClient.getInstance().reportSendResult(ok, info);
             return ok;
         } catch (Exception e) {
             Log.w(TAG, "Wiclax fail: " + e.getMessage());
@@ -250,14 +328,13 @@ public class UploadManager {
         }
     }
 
-    private boolean sendRufus(String epc, String queuedTs) {
+    private boolean sendRufus(String epc, long readTimeMs) {
         String apiKey = prefs.getString("rufus_api_key", "");
         String tokenSession = RufusClient.getInstance().getTokenSession();
         if (apiKey.isEmpty()) { Log.w(TAG, "Rufus skip: no api key"); return false; }
         if (tokenSession == null) { Log.w(TAG, "Rufus skip: no session"); return false; }
 
         final int num = passingCounter.incrementAndGet();
-        Date readTime = parseQueuedTs(queuedTs);
 
         try {
             // API expects RFC 3339; convert device-local read time to real UTC
@@ -265,7 +342,7 @@ public class UploadManager {
             iso.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
 
             org.json.JSONObject passing = new org.json.JSONObject();
-            passing.put("timestamp", iso.format(readTime != null ? readTime : new Date()));
+            passing.put("timestamp", iso.format(new Date(readTimeMs)));
             passing.put("timezone", java.util.TimeZone.getDefault().getID());
             passing.put("num_passing", num);
             passing.put("bib", epc.replaceFirst("^0+(?!$)", ""));

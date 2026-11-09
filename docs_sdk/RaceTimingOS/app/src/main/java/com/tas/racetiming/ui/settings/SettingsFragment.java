@@ -19,6 +19,7 @@ import androidx.fragment.app.Fragment;
 
 import com.tas.racetiming.R;
 import com.tas.racetiming.network.RufusClient;
+import com.tas.racetiming.network.UploadManager;
 import com.tas.racetiming.network.WiclaxClient;
 import com.tas.racetiming.uhf.UHFManager;
 
@@ -43,7 +44,7 @@ public class SettingsFragment extends Fragment {
     private RadioGroup rgPlatform;
     private View wiclaxSection, rufusSection;
 
-    private EditText etServerUrl, etUser, etDeviceId;
+    private EditText etServerUrl, etUser, etDeviceId, etWiclaxOffset;
     private TextView tvConnectionStatus;
     private View statusDot;
     private Button btnSave;
@@ -83,6 +84,7 @@ public class SettingsFragment extends Fragment {
         etServerUrl = view.findViewById(R.id.et_server_url);
         etUser = view.findViewById(R.id.et_user);
         etDeviceId = view.findViewById(R.id.et_device_id);
+        etWiclaxOffset = view.findViewById(R.id.et_wiclax_offset);
         tvConnectionStatus = view.findViewById(R.id.tv_connection_status);
         statusDot = view.findViewById(R.id.tv_status_dot);
         btnSave = view.findViewById(R.id.btn_save);
@@ -122,7 +124,7 @@ public class SettingsFragment extends Fragment {
             savePrefs();
         });
 
-        List<EditText> autoSaveFields = Arrays.asList(etEpcPrefix, etServerUrl, etUser, etDeviceId,
+        List<EditText> autoSaveFields = Arrays.asList(etEpcPrefix, etServerUrl, etUser, etDeviceId, etWiclaxOffset,
                 etRufusApiKey, etRufusSerial, etRufusAlias);
         for (EditText et : autoSaveFields) {
             et.setOnFocusChangeListener((v, hasFocus) -> { if (!hasFocus) savePrefs(); });
@@ -226,17 +228,30 @@ public class SettingsFragment extends Fragment {
                 .putInt("power", sbPower.getProgress())
                 .putBoolean("epc_filter", switchEpc.isChecked())
                 .putString("epc_prefix", etEpcPrefix.getText().toString())
-                .putString("server_url", etServerUrl.getText().toString())
-                .putString("user", etUser.getText().toString())
-                .putString("device_id", etDeviceId.getText().toString())
+                .putString("server_url", etServerUrl.getText().toString().trim())
+                .putString("user", etUser.getText().toString().trim())
+                .putString("device_id", etDeviceId.getText().toString().trim())
+                .putInt(UploadManager.KEY_WICLAX_OFFSET_MIN, parseOffset())
                 .putString(KEY_RUFUS_API_KEY, etRufusApiKey.getText().toString())
                 .putString(KEY_RUFUS_SERIAL, etRufusSerial.getText().toString())
                 .putString(KEY_RUFUS_ALIAS, etRufusAlias.getText().toString())
                 .apply();
     }
 
+    // minutes; blank or invalid -> 0, clamped to +/-24h
+    private int parseOffset() {
+        try {
+            int v = Integer.parseInt(etWiclaxOffset.getText().toString().trim());
+            return Math.max(-1440, Math.min(1440, v));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     private void loadPrefs() {
         SharedPreferences p = getPrefs();
+        int offset = p.getInt(UploadManager.KEY_WICLAX_OFFSET_MIN, 0);
+        etWiclaxOffset.setText(offset == 0 ? "" : String.valueOf(offset));
         sbPower.setProgress(p.getInt("power", 26));
         switchEpc.setChecked(p.getBoolean("epc_filter", false));
         etEpcPrefix.setText(p.getString("epc_prefix", ""));
