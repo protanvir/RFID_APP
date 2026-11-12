@@ -27,8 +27,8 @@ public class SessionData {
         sessionStartTimeMs = System.currentTimeMillis();
         sessionStopTimeMs = 0;
         isScanning = true;
-        totalReads = 0;
-        uniqueTags.clear();
+        // counters are NOT reset here: with hold-to-scan every trigger press
+        // starts a scan, and the totals must keep running. CLEAR resets them.
     }
 
     public void stop() {

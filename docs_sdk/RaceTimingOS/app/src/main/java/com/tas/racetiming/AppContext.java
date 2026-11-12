@@ -3,6 +3,11 @@ package com.tas.racetiming;
 import android.app.Application;
 import android.util.Log;
 
+import com.tas.racetiming.network.UploadManager;
+import com.tas.racetiming.scan.ScanController;
+import com.tas.racetiming.tools.BibMap;
+import com.tas.racetiming.tools.ClockCheck;
+import com.tas.racetiming.tools.FileUtils;
 import com.tas.racetiming.uhf.UHFManager;
 
 import java.io.File;
@@ -28,7 +33,30 @@ public class AppContext extends Application implements Thread.UncaughtExceptionH
         instance = this;
         previousHandler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler(this);
+
+        // Process-wide services: started here, not from a screen, so scanning
+        // and uploads do not depend on any view being alive.
+        android.content.SharedPreferences prefs = getSharedPreferences(ScanController.PREFS, 0);
+        ScanController.getInstance().init(this);
+        UploadManager um = UploadManager.getInstance();
+        um.init(prefs);
+        um.start();
+
+        // Rufus used to be configured only when the Settings screen was opened,
+        // so uploads after a fresh app start failed until someone visited it
+        com.tas.racetiming.network.RufusClient rufus = com.tas.racetiming.network.RufusClient.getInstance();
+        rufus.configure(prefs.getString("rufus_api_key", ""),
+                prefs.getString("rufus_serial", ""), prefs.getString("rufus_alias", ""));
+        String rufusDeviceId = prefs.getString("rufus_device_id", null);
+        if (rufusDeviceId != null && !rufusDeviceId.isEmpty()) rufus.setDeviceId(rufusDeviceId);
+
+        new Thread(BibMap::load, "BibLoad").start();
+        FileUtils.cleanupOldLogs(prefs.getInt(KEY_KEEP_DAYS, 0));
+        ClockCheck.runAsync();
     }
+
+    /** Days of read logs to keep; 0 = keep forever. */
+    public static final String KEY_KEEP_DAYS = "keep_days";
 
     @Override
     public void uncaughtException(Thread thread, Throwable throwable) {

@@ -53,6 +53,14 @@
     <string name="no_csv_today">No CSV data for today</string>
     <string name="bind_device">BIND DEVICE</string>
 
+    <!-- Feed tools -->
+    <string name="view_all_reads">VIEW: ALL READS</string>
+    <string name="view_by_tag">VIEW: BY TAG</string>
+    <string name="manual_bib">+ BIB</string>
+    <string name="gun_start">GUN START</string>
+    <string name="last_seen_header">LAST SEEN</string>
+    <string name="count_rssi_header">READS / BEST</string>
+
     <!-- Platform -->
     <string name="platform_label">PLATFORM</string>
     <string name="platform_off">Off</string>

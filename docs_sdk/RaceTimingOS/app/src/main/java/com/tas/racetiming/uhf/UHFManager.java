@@ -1,6 +1,6 @@
 package com.tas.racetiming.uhf;
 
-import android.app.Activity;
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -11,6 +11,7 @@ import com.rscja.deviceapi.entity.InventoryParameter;
 import com.rscja.deviceapi.entity.UHFTAGInfo;
 import com.rscja.deviceapi.interfaces.IUHFInventoryCallback;
 import com.rscja.utility.BatteryUtils;
+import com.tas.racetiming.tools.PassingFormat;
 
 public class UHFManager {
     private static final String TAG = "UHFManager";
@@ -21,6 +22,7 @@ public class UHFManager {
     private int powerLevel = 26;
     private String epcFilter = "";
     private boolean epcFilterEnabled = false;
+    private volatile int minRssi = 0;
     private TagCallback tagCallback;
     private boolean isScanning = false;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -37,11 +39,14 @@ public class UHFManager {
         return instance;
     }
 
-    public boolean init(Activity activity) {
+    // Takes any Context and keeps only the application context: scanning now
+    // outlives the activity (foreground service), so the reader must not hold
+    // on to a destroyed Activity.
+    public boolean init(Context context) {
         if (isInitialized) return true;
         try {
             reader = RFIDWithUHFUART.getInstance();
-            isInitialized = reader.init(activity);
+            isInitialized = reader.init(context.getApplicationContext());
             if (isInitialized) {
                 reader.setPower(powerLevel);
                 Log.i(TAG, "UHF initialized, power: " + powerLevel);
@@ -86,6 +91,11 @@ public class UHFManager {
         this.epcFilterEnabled = enabled;
     }
 
+    /** Reads weaker than this (dBm, e.g. -70) are ignored; 0 turns the filter off. */
+    public void setMinRssi(int dbm) {
+        this.minRssi = dbm;
+    }
+
     public void setTagCallback(TagCallback callback) {
         this.tagCallback = callback;
     }
@@ -108,6 +118,11 @@ public class UHFManager {
                 String rssi = uhftagInfo.getRssi();
                 if (epc == null || epc.isEmpty()) return;
                 if (epcFilterEnabled && !epc.startsWith(epcFilter)) return;
+                if (minRssi != 0) {
+                    // a read with no usable RSSI value is kept, not dropped
+                    double v = PassingFormat.parseRssi(rssi);
+                    if (!Double.isNaN(v) && v < minRssi) return;
+                }
 
                 String user = uhftagInfo.getUser();
                 final String epcFinal = epc;

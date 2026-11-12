@@ -20,7 +20,10 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import com.rscja.scanner.utility.ScannerUtility;
+import com.tas.racetiming.network.UploadManager;
 import com.tas.racetiming.network.WiclaxClient;
+import com.tas.racetiming.scan.ScanController;
+import com.tas.racetiming.scan.ScanService;
 import com.tas.racetiming.ui.dashboard.DashboardFragment;
 import com.tas.racetiming.ui.settings.SettingsFragment;
 import com.tas.racetiming.uhf.UHFManager;
@@ -77,10 +80,45 @@ public class MainActivity extends AppCompatActivity {
 
         WiclaxClient wc = WiclaxClient.getInstance();
         wc.configure(savedUrl, savedUser, savedDeviceId);
-        wc.addListener((connected, info) -> tvConnectionBadge.setText(connected ? "ON" : "OFF"));
-        tvConnectionBadge.setText("...");
         wc.start();
+
+        // Header badge: the real upload state, not just "ON/OFF"
+        UploadManager.getInstance().addListener(badgeListener);
+
+
+        if (Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 2);
+        }
     }
+
+    private boolean backlogServiceStarted = false;
+
+    private final UploadManager.UploadListener badgeListener = (platform, sent, failed, pending) -> {
+        // Passings left over from a previous run: keep the app alive until
+        // they are uploaded, even if the user leaves straight away
+        if (!backlogServiceStarted && pending > 0 && !UploadManager.PLATFORM_OFF.equals(platform)) {
+            backlogServiceStarted = true;
+            ScanService.start(this);
+        }
+        String text;
+        int color;
+        if (UploadManager.PLATFORM_OFF.equals(platform)) {
+            text = "UPLOAD OFF";
+            color = R.color.outline;
+        } else if (failed > 0) {
+            text = platform.toUpperCase(java.util.Locale.US) + " RETRYING (" + pending + ")";
+            color = android.R.color.holo_red_light;
+        } else if (pending > 0) {
+            text = platform.toUpperCase(java.util.Locale.US) + " SENDING (" + pending + ")";
+            color = android.R.color.holo_orange_light;
+        } else {
+            text = platform.toUpperCase(java.util.Locale.US) + " OK";
+            color = android.R.color.holo_green_light;
+        }
+        tvConnectionBadge.setText(text);
+        tvConnectionBadge.setTextColor(getResources().getColor(color, getTheme()));
+    };
 
     // show/hide keeps DashboardFragment alive — replace() destroyed its view,
     // which stopped scanning and the upload queue mid-race
@@ -122,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        ScanController.uiResumed = true;
         try {
             ScannerUtility.getScannerInerface().close(this);
         } catch (Throwable t) {
@@ -132,6 +171,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        ScanController.uiResumed = false;
+        // While a scan is running in the background the system scanner stays
+        // closed, so it cannot fight our reader for the RFID module.
+        // ScanController reopens it when that scan stops.
+        if (ScanController.getInstance().isScanning()) return;
         try {
             ScannerUtility.getScannerInerface().open(this);
         } catch (Throwable t) {
@@ -139,16 +183,30 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == 139 || keyCode == 280 || keyCode == 291
+    private static boolean isTriggerKey(int keyCode) {
+        return keyCode == 139 || keyCode == 280 || keyCode == 291
                 || keyCode == 293 || keyCode == 294 || keyCode == 311
                 || keyCode == 312 || keyCode == 313 || keyCode == 315
                 || keyCode == 591 || keyCode == 593 || keyCode == 594
-                || keyCode == 596) {
-            if (event.getRepeatCount() == 0) {
-                if (dashboardFragment != null && dashboardFragment.isVisible()) {
-                    dashboardFragment.onTriggerPressed();
+                || keyCode == 596;
+    }
+
+    // Trigger modes (Settings): toggle = press to start, press again to stop;
+    // hold = scan only while the trigger is held down.
+    private boolean holdToScan() {
+        return getSharedPreferences(ScanController.PREFS, 0)
+                .getBoolean(ScanController.KEY_TRIGGER_HOLD, false);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (isTriggerKey(keyCode)) {
+            if (event.getRepeatCount() == 0
+                    && dashboardFragment != null && dashboardFragment.isVisible()) {
+                if (holdToScan()) {
+                    dashboardFragment.startScan();
+                } else {
+                    dashboardFragment.toggleScan();
                 }
             }
             return true;
@@ -157,9 +215,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (isTriggerKey(keyCode)) {
+            if (holdToScan() && dashboardFragment != null) dashboardFragment.stopScan();
+            return true;
+        }
+        return super.onKeyUp(keyCode, event);
+    }
+
+    @Override
     public void onBackPressed() {
         if (settingsFragment != null && settingsFragment.isVisible()) {
             showDashboard();
+        } else if (ScanController.getInstance().isScanning()) {
+            // leaving with Back closes the app and stops the reader: make sure
+            // that is not an accident mid-race
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Stop scanning and close?")
+                    .setMessage("The reader is scanning. Closing the app stops it. "
+                            + "Use the Home button instead to keep scanning in the background.")
+                    .setPositiveButton("STOP AND CLOSE", (d, w) -> super.onBackPressed())
+                    .setNegativeButton("Keep scanning", null)
+                    .show();
         } else {
             super.onBackPressed();
         }
@@ -168,7 +245,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        WiclaxClient.getInstance().stop();
-        UHFManager.getInstance().free();
+        UploadManager.getInstance().removeListener(badgeListener);
+        // Only a deliberate close (Back) stops the reader. If Android destroys
+        // the activity while it is in the background, scanning carries on in
+        // ScanService. Uploads always continue either way.
+        if (isFinishing()) {
+            ScanController.getInstance().stop();
+            WiclaxClient.getInstance().stop();
+            UHFManager.getInstance().free();
+        }
     }
 }

@@ -131,6 +131,61 @@
                 android:layout_marginTop="@dimen/stack_sm"/>
         </LinearLayout>
 
+        <!-- Read options: signal filter + trigger mode -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/zinc_900"
+            android:padding="@dimen/gutter"
+            android:layout_marginBottom="@dimen/stack_md">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Minimum signal (dBm, e.g. -65; blank = off)"
+                android:textColor="@color/outline"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"/>
+
+            <EditText
+                android:id="@+id/et_min_rssi"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/touch_target_min"
+                android:inputType="numberSigned"
+                android:paddingLeft="@dimen/gutter"
+                android:paddingRight="@dimen/gutter"
+                android:background="@color/surface_container_lowest"
+                android:textColor="@color/on_surface"
+                android:textSize="@dimen/body_lg_text_size"
+                android:hint="off"
+                android:layout_marginTop="@dimen/base"
+                android:layout_marginBottom="@dimen/stack_sm"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Hold trigger to scan (off = press to start/stop)"
+                    android:textColor="@color/outline"
+                    android:textSize="@dimen/label_caps_text_size"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.1"/>
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switch_trigger_hold"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+        </LinearLayout>
+
         <!-- Platform Selector -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -296,29 +351,6 @@
                 android:hint="C72-SN-001"
                 android:layout_marginBottom="@dimen/stack_sm"/>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Wiclax time offset (minutes, + or -)"
-                android:textColor="@color/on_surface_variant"
-                android:textSize="@dimen/label_caps_text_size"
-                android:textAllCaps="true"
-                android:letterSpacing="0.1"
-                android:layout_marginBottom="@dimen/base"/>
-
-            <EditText
-                android:id="@+id/et_wiclax_offset"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/touch_target_min"
-                android:inputType="numberSigned"
-                android:paddingLeft="@dimen/gutter"
-                android:paddingRight="@dimen/gutter"
-                android:background="@color/surface_container_lowest"
-                android:textColor="@color/on_surface"
-                android:textSize="@dimen/body_lg_text_size"
-                android:hint="0"
-                android:layout_marginBottom="@dimen/stack_sm"/>
-
             <Button
                 android:id="@+id/btn_save"
                 android:layout_width="match_parent"
@@ -460,6 +492,167 @@
                 android:backgroundTint="@color/primary_container"
                 android:textColor="@color/zinc_950"
                 style="@style/Widget.Material3.Button"/>
+        </LinearLayout>
+
+        <!-- Status / health -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/zinc_900"
+            android:padding="@dimen/gutter"
+            android:layout_marginBottom="@dimen/stack_md">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Status"
+                android:textColor="@color/outline"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="@dimen/base"/>
+
+            <TextView
+                android:id="@+id/tv_health"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="--"
+                android:textColor="@color/on_surface"
+                android:textSize="@dimen/body_lg_text_size"
+                android:lineSpacingExtra="4dp"
+                android:layout_marginBottom="@dimen/stack_sm"/>
+
+            <Button
+                android:id="@+id/btn_check_clock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Check clock now"
+                android:textAllCaps="true"
+                android:backgroundTint="@color/surface_container_highest"
+                android:textColor="@color/primary_container"
+                style="@style/Widget.Material3.Button"/>
+        </LinearLayout>
+
+        <!-- Bib list -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/zinc_900"
+            android:padding="@dimen/gutter"
+            android:layout_marginBottom="@dimen/stack_md">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Bib list"
+                android:textColor="@color/outline"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="@dimen/base"/>
+
+            <TextView
+                android:id="@+id/tv_bib_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="--"
+                android:textColor="@color/on_surface"
+                android:textSize="@dimen/body_lg_text_size"
+                android:layout_marginBottom="@dimen/stack_sm"/>
+
+            <Button
+                android:id="@+id/btn_reload_bibs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Reload bib list"
+                android:textAllCaps="true"
+                android:backgroundTint="@color/surface_container_highest"
+                android:textColor="@color/primary_container"
+                style="@style/Widget.Material3.Button"/>
+        </LinearLayout>
+
+        <!-- Data tools -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/zinc_900"
+            android:padding="@dimen/gutter"
+            android:layout_marginBottom="@dimen/stack_md">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Data tools"
+                android:textColor="@color/outline"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:layout_marginBottom="@dimen/base"/>
+
+            <Button
+                android:id="@+id/btn_resend"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Re-send reads from today's log"
+                android:textAllCaps="true"
+                android:backgroundTint="@color/surface_container_highest"
+                android:textColor="@color/primary_container"
+                style="@style/Widget.Material3.Button"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_export_settings"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="@dimen/base"
+                    android:text="Export settings"
+                    android:textAllCaps="true"
+                    android:backgroundTint="@color/surface_container_highest"
+                    android:textColor="@color/primary_container"
+                    style="@style/Widget.Material3.Button"/>
+
+                <Button
+                    android:id="@+id/btn_import_settings"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Import settings"
+                    android:textAllCaps="true"
+                    android:backgroundTint="@color/surface_container_highest"
+                    android:textColor="@color/primary_container"
+                    style="@style/Widget.Material3.Button"/>
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delete read logs older than (days; blank = never)"
+                android:textColor="@color/on_surface_variant"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textAllCaps="true"
+                android:letterSpacing="0.1"
+                android:layout_marginTop="@dimen/stack_sm"
+                android:layout_marginBottom="@dimen/base"/>
+
+            <EditText
+                android:id="@+id/et_keep_days"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/touch_target_min"
+                android:inputType="number"
+                android:paddingLeft="@dimen/gutter"
+                android:paddingRight="@dimen/gutter"
+                android:background="@color/surface_container_lowest"
+                android:textColor="@color/on_surface"
+                android:textSize="@dimen/body_lg_text_size"
+                android:hint="never"/>
         </LinearLayout>
 
         <!-- Hardware Monitor -->

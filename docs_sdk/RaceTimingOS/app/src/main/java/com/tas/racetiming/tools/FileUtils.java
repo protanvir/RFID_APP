@@ -63,4 +63,76 @@ public class FileUtils {
             Log.e(TAG, "writeTagToCsv error: " + e.getMessage());
         }
     }
+
+    /** Daily log file for the day containing the given time. */
+    public static String getDailyFileName(long timeMs) {
+        String date = new SimpleDateFormat("yyyyMMdd", Locale.US).format(new Date(timeMs));
+        return BASE_DIR + "racetiming_" + date + ".csv";
+    }
+
+    /**
+     * Records a race marker (e.g. the gun start) in markers_YYYYMMDD.csv as
+     * "LABEL;dd-MM-yyyy HH:mm:ss.SSS". Kept out of the reads log so that file
+     * stays one tag read per line. Markers are not uploaded.
+     */
+    public static void writeMarker(String label, long timeMs) {
+        ioExecutor.execute(() -> {
+            try {
+                ensureDirExists();
+                String date = new SimpleDateFormat("yyyyMMdd", Locale.US).format(new Date(timeMs));
+                String ts = new SimpleDateFormat(QueueLine.TS_FORMAT, Locale.US).format(new Date(timeMs));
+                try (FileOutputStream fos = new FileOutputStream(BASE_DIR + "markers_" + date + ".csv", true)) {
+                    fos.write((label + ";" + ts + "\r\n").getBytes(StandardCharsets.UTF_8));
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "writeMarker error: " + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Reads logged tag reads with fromMs <= read time <= toMs from the daily
+     * log of the day containing fromMs. Blocking; call off the main thread.
+     */
+    public static java.util.List<QueueLine> readLogRange(long fromMs, long toMs) {
+        java.util.List<QueueLine> out = new java.util.ArrayList<>();
+        File f = new File(getDailyFileName(fromMs));
+        if (!f.exists()) return out;
+        try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(
+                new java.io.FileInputStream(f), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = r.readLine()) != null) {
+                QueueLine ql = QueueLine.parse(line.replace("﻿", ""));
+                if (ql == null || ql.readTimeMs <= 0) continue;
+                if (ql.readTimeMs >= fromMs && ql.readTimeMs <= toMs) out.add(ql);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "readLogRange error: " + e.getMessage());
+        }
+        return out;
+    }
+
+    /**
+     * Deletes daily read logs and marker files older than keepDays. Does
+     * nothing when keepDays <= 0 (keep forever). Runs in the background.
+     */
+    public static void cleanupOldLogs(int keepDays) {
+        if (keepDays <= 0) return;
+        ioExecutor.execute(() -> {
+            try {
+                long cutoff = System.currentTimeMillis() - keepDays * 24L * 3600_000L;
+                File[] files = new File(BASE_DIR).listFiles();
+                if (files == null) return;
+                for (File f : files) {
+                    String n = f.getName();
+                    boolean isLog = n.matches("(racetiming|markers)_\\d{8}\\.csv");
+                    if (isLog && f.lastModified() < cutoff) {
+                        Log.i(TAG, "deleting old log " + n + ": " + f.delete());
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "cleanup error: " + e.getMessage());
+            }
+        });
+    }
 }

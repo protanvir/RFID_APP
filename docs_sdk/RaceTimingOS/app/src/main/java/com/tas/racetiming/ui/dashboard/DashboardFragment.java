@@ -1,65 +1,60 @@
 package com.tas.racetiming.ui.dashboard;
 
-import android.content.SharedPreferences;
-import android.media.AudioManager;
-import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.util.Log;
+import android.text.InputType;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.tas.racetiming.R;
-import com.tas.racetiming.model.SessionData;
 import com.tas.racetiming.model.TagRead;
-import com.tas.racetiming.network.RufusClient;
 import com.tas.racetiming.network.UploadManager;
+import com.tas.racetiming.scan.ScanController;
+import com.tas.racetiming.tools.BibMap;
+import com.tas.racetiming.tools.ClockCheck;
 import com.tas.racetiming.tools.FileUtils;
-import com.tas.racetiming.uhf.UHFManager;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.LinkedList;
+import java.util.Locale;
 
-public class DashboardFragment extends Fragment {
+/**
+ * Live reads screen. Purely a view: scanning, logging and uploading are owned
+ * by ScanController / UploadManager and keep running without this fragment.
+ */
+public class DashboardFragment extends Fragment
+        implements ScanController.Listener, ClockCheck.Listener {
 
-    private TextView tvTotalReads, tvUniqueTags, tvSendStatus, tvSendCounts;
-    // rows kept in the live feed (feed now fills the screen and scrolls)
-    private static final int FEED_MAX_ROWS = 50;
+    private TextView tvTotalReads, tvUniqueTags, tvSendStatus, tvSendCounts, tvClockWarning;
+    private TextView tvViewToggle, tvCol1, tvCol2, tvCol3;
     private Button btnScan, btnClear, btnDownloadCsv;
     private LinearLayout feedList;
     private View statusDot;
-    private final SessionData session = new SessionData();
-    private final LinkedList<TagRead> recentReads = new LinkedList<>();
-    private final Handler timerHandler = new Handler();
-    private ToneGenerator toneGenerator;
-    private long lastBeepMs = 0;
+    private final Handler uiHandler = new Handler();
+    private final ScanController scan = ScanController.getInstance();
+
+    /** false = every read as it happens; true = one row per tag */
+    private boolean byTagView = false;
 
     // Rebuilding the feed on every tag read floods the main thread at burst
     // rates; coalesce renders to at most one per interval
     private static final long FEED_RENDER_INTERVAL_MS = 200;
     private boolean feedRenderPending = false;
-
-    private final Runnable timerRunnable = new Runnable() {
-        @Override
-        public void run() {
-            tvTotalReads.setText(String.valueOf(session.getTotalReads()));
-            tvUniqueTags.setText(String.valueOf(session.getUniqueTagCount()));
-            timerHandler.postDelayed(this, 1000);
-        }
-    };
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -74,89 +69,113 @@ public class DashboardFragment extends Fragment {
         statusDot = view.findViewById(R.id.v_status_dot);
         tvSendStatus = view.findViewById(R.id.tv_send_status);
         tvSendCounts = view.findViewById(R.id.tv_send_counts);
+        tvClockWarning = view.findViewById(R.id.tv_clock_warning);
+        tvViewToggle = view.findViewById(R.id.tv_view_toggle);
+        tvCol1 = view.findViewById(R.id.tv_col1);
+        tvCol2 = view.findViewById(R.id.tv_col2);
+        tvCol3 = view.findViewById(R.id.tv_col3);
 
-        btnScan.setOnClickListener(v -> onScanClick());
-        btnClear.setOnClickListener(v -> clearReads());
+        btnScan.setOnClickListener(v -> toggleScan());
+        btnClear.setOnClickListener(v -> scan.clear());
         btnDownloadCsv.setOnClickListener(v -> shareCsv());
+        tvViewToggle.setOnClickListener(v -> {
+            byTagView = !byTagView;
+            applyViewMode();
+            renderFeed();
+        });
+        view.findViewById(R.id.tv_manual_bib).setOnClickListener(v -> showManualBibDialog());
+        view.findViewById(R.id.tv_gun_start).setOnClickListener(v -> confirmGunStart());
 
-        toneGenerator = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80);
+        scan.addListener(this);
+        UploadManager.getInstance().addListener(uploadListener);
+        ClockCheck.addListener(this);
 
-        updateScanButton(false);
-
-        timerHandler.post(timerRunnable);
-
-        UploadManager um = UploadManager.getInstance();
-        um.init(requireActivity().getSharedPreferences("tas_timer_settings", 0));
-        um.addListener(uploadListener);
-        um.start();
+        updateScanButton(scan.isScanning());
+        applyViewMode();
+        updateCounters();
+        renderFeed();
+        onClockChecked();
 
         return view;
     }
 
     private final UploadManager.UploadListener uploadListener = (platform, sent, failed, pending) -> {
-        if ("off".equals(platform)) {
+        if (statusDot == null) return;
+        tvSendCounts.setText("");
+        if (UploadManager.PLATFORM_OFF.equals(platform)) {
             statusDot.setBackgroundResource(R.drawable.status_dot_gray);
-            tvSendStatus.setText("Ready");
-            tvSendCounts.setText("");
+            tvSendStatus.setText(pending > 0
+                    ? "Upload off — " + pending + " waiting" : "Upload off (saving to CSV only)");
             return;
         }
+        String name = platform.substring(0, 1).toUpperCase(Locale.US) + platform.substring(1);
         if (failed > 0) {
             statusDot.setBackgroundResource(R.drawable.status_dot_red);
-            tvSendStatus.setText("Retrying — pending: " + pending);
-            tvSendCounts.setText("");
+            String why = UploadManager.getInstance().getLastError();
+            tvSendStatus.setText("Retrying — " + pending + " waiting"
+                    + (why.isEmpty() ? "" : "\n" + why));
         } else if (pending > 0) {
             statusDot.setBackgroundResource(R.drawable.status_dot_orange);
-            tvSendStatus.setText("Pending: " + pending);
-            tvSendCounts.setText("");
+            tvSendStatus.setText(name + ": sending, " + pending + " waiting");
         } else {
             statusDot.setBackgroundResource(R.drawable.status_dot_green);
-            tvSendStatus.setText(platform.substring(0, 1).toUpperCase() + platform.substring(1) + " OK");
-            tvSendCounts.setText("");
+            tvSendStatus.setText(name + " OK — all uploaded");
         }
     };
 
-    public void onTriggerPressed() {
-        onScanClick();
+    // ---- ScanController.Listener ----
+
+    @Override
+    public void onReadsChanged() {
+        scheduleFeedRender();
     }
 
-    private void onScanClick() {
-        UHFManager uhf = UHFManager.getInstance();
-        if (session.isScanning()) {
-            session.stop();
-            uhf.stopInventory();
-            updateScanButton(false);
+    @Override
+    public void onScanStateChanged(boolean scanning) {
+        if (btnScan != null) updateScanButton(scanning);
+    }
+
+    // ---- ClockCheck.Listener ----
+
+    @Override
+    public void onClockChecked() {
+        if (tvClockWarning == null) return;
+        if (ClockCheck.isOff()) {
+            tvClockWarning.setText("⚠ " + ClockCheck.describe()
+                    + " — passing times will be wrong. Fix the device time.");
+            tvClockWarning.setVisibility(View.VISIBLE);
         } else {
-            if (!hasStorageAccess()) {
-                // scan still works (live feed + counters), but CSV log and the
-                // upload queue both live on external storage
-                Toast.makeText(getContext(),
-                        "Storage permission missing — reads will NOT be saved or uploaded",
-                        Toast.LENGTH_LONG).show();
-            }
-            if (!uhf.isInitialized()) {
-                if (getActivity() != null) {
-                    uhf.init(getActivity());
-                }
-            }
-            uhf.setTagCallback(this::onTagRead);
-            session.start();
-            if (uhf.startInventory()) {
-                updateScanButton(true);
-            }
+            tvClockWarning.setVisibility(View.GONE);
         }
     }
 
-    private void onTagRead(String epc, String rssi, String user, long readTimeMs) {
-        Log.i("TAG_READ", "epc=" + epc + " rssi=" + rssi + " user=" + user);
-        session.incrementReads(epc);
-        String time = android.text.format.DateFormat.format("HH:mm:ss.S", readTimeMs).toString();
-        TagRead read = new TagRead(epc, time, rssi);
-        recentReads.addFirst(read);
-        if (recentReads.size() > FEED_MAX_ROWS) recentReads.removeLast();
-        scheduleFeedRender();
-        playBeep();
-        FileUtils.writeTagToCsv(epc, rssi, readTimeMs);
-        UploadManager.getInstance().enqueue(epc, rssi, readTimeMs);
+    // ---- scanning ----
+
+    /** Trigger pressed in toggle mode, or the START/STOP button. */
+    public void toggleScan() {
+        if (scan.isScanning()) {
+            scan.stop();
+        } else {
+            startScan();
+        }
+    }
+
+    public void startScan() {
+        if (scan.isScanning()) return;
+        if (!hasStorageAccess()) {
+            // scan still works (live feed + counters), but CSV log and the
+            // upload queue both live on external storage
+            Toast.makeText(getContext(),
+                    "Storage permission missing — reads will NOT be saved or uploaded",
+                    Toast.LENGTH_LONG).show();
+        }
+        if (!scan.start()) {
+            Toast.makeText(getContext(), "RFID reader did not start", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public void stopScan() {
+        scan.stop();
     }
 
     private boolean hasStorageAccess() {
@@ -168,26 +187,8 @@ public class DashboardFragment extends Fragment {
                 == android.content.pm.PackageManager.PERMISSION_GRANTED;
     }
 
-    private String getPlatform() {
-        SharedPreferences p = requireActivity().getSharedPreferences("tas_timer_settings", 0);
-        return p.getString("selected_platform", "off");
-    }
-
-    private void clearReads() {
-        UHFManager uhf = UHFManager.getInstance();
-        if (session.isScanning()) {
-            session.stop();
-            uhf.stopInventory();
-            updateScanButton(false);
-        }
-        recentReads.clear();
-        feedList.removeAllViews();
-        session.reset();
-        tvTotalReads.setText("0");
-        tvUniqueTags.setText("0");
-    }
-
     private void updateScanButton(boolean scanning) {
+        if (getContext() == null) return;
         if (scanning) {
             btnScan.setText(R.string.stop_scanning);
             btnScan.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), android.R.color.holo_red_dark));
@@ -197,16 +198,38 @@ public class DashboardFragment extends Fragment {
         }
     }
 
-    private void playBeep() {
-        long now = System.currentTimeMillis();
-        if (now - lastBeepMs < 80) return;
-        lastBeepMs = now;
-        try {
-            if (toneGenerator != null) {
-                toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 60);
-            }
-        } catch (Exception ignored) {}
+    // ---- manual passing / gun start ----
+
+    private void showManualBibDialog() {
+        if (getContext() == null) return;
+        final EditText input = new EditText(getContext());
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
+        input.setHint("Bib number");
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Add passing by hand")
+                .setMessage("Records a passing for this bib at the moment you press ADD.")
+                .setView(input)
+                .setPositiveButton("ADD", (d, w) -> {
+                    String epc = scan.manualRead(input.getText().toString());
+                    if (epc == null) return;
+                    Toast.makeText(getContext(), "Added passing for chip " + epc, Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
+
+    private void confirmGunStart() {
+        if (getContext() == null) return;
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Record gun start now?")
+                .setMessage("Saves the current time as the race start in today's markers file. "
+                        + "It is not sent to the timing platform.")
+                .setPositiveButton("RECORD", (d, w) -> scan.markStart())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    // ---- CSV download ----
 
     private void shareCsv() {
         File src = new File(FileUtils.getDailyFileName());
@@ -226,81 +249,90 @@ public class DashboardFragment extends Fragment {
     }
 
     private void copyFile(File src, File dst) throws Exception {
-        InputStream in = new FileInputStream(src);
-        OutputStream out = new FileOutputStream(dst);
-        byte[] buf = new byte[8192];
-        int n;
-        while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
-        in.close();
-        out.close();
+        try (InputStream in = new FileInputStream(src); OutputStream out = new FileOutputStream(dst)) {
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+        }
+    }
+
+    // ---- feed ----
+
+    private void applyViewMode() {
+        tvViewToggle.setText(byTagView ? R.string.view_by_tag : R.string.view_all_reads);
+        tvCol2.setText(byTagView ? R.string.last_seen_header : R.string.time_header);
+        tvCol3.setText(byTagView ? R.string.count_rssi_header : R.string.rssi_header);
+    }
+
+    private void updateCounters() {
+        tvTotalReads.setText(String.valueOf(scan.getTotalReads()));
+        tvUniqueTags.setText(String.valueOf(scan.getUniqueTagCount()));
     }
 
     private void scheduleFeedRender() {
         if (feedRenderPending) return;
         feedRenderPending = true;
-        timerHandler.postDelayed(() -> {
+        uiHandler.postDelayed(() -> {
             feedRenderPending = false;
             renderFeed();
         }, FEED_RENDER_INTERVAL_MS);
     }
 
     private void renderFeed() {
-        if (getActivity() == null) return;
-        getActivity().runOnUiThread(() -> {
-            feedList.removeAllViews();
-            int count = 0;
-            for (TagRead read : recentReads) {
-                if (count++ >= FEED_MAX_ROWS) break;
-                LinearLayout rowLayout = new LinearLayout(getContext());
-                rowLayout.setOrientation(LinearLayout.HORIZONTAL);
-                rowLayout.setPadding(16, 16, 16, 16);
-                rowLayout.setBackgroundColor(getResources().getColor(
-                        count % 2 == 0 ? R.color.zinc_900 : R.color.surface_container_lowest,
-                        getContext().getTheme()));
-
-                TextView tvEpc = new TextView(getContext());
-                tvEpc.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-                tvEpc.setText(read.getEpc());
-                tvEpc.setTextColor(getResources().getColor(R.color.primary_container, getContext().getTheme()));
-                tvEpc.setTextSize(16);
-
-                TextView tvTime = new TextView(getContext());
-                tvTime.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-                tvTime.setGravity(android.view.Gravity.CENTER);
-                tvTime.setText(read.getTimestamp());
-                tvTime.setTextColor(getResources().getColor(R.color.on_surface, getContext().getTheme()));
-                tvTime.setTextSize(13);
-
-                TextView tvRssi = new TextView(getContext());
-                tvRssi.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-                tvRssi.setGravity(android.view.Gravity.END);
-                tvRssi.setText(read.getRssi().isEmpty() ? "--" : read.getRssi());
-                tvRssi.setTextColor(getResources().getColor(R.color.secondary, getContext().getTheme()));
-                tvRssi.setTextSize(13);
-
-                rowLayout.addView(tvEpc);
-                rowLayout.addView(tvTime);
-                rowLayout.addView(tvRssi);
-                feedList.addView(rowLayout);
+        if (getContext() == null || feedList == null) return;
+        updateCounters();
+        feedList.removeAllViews();
+        int row = 0;
+        if (byTagView) {
+            for (ScanController.TagStat s : scan.getTagStats(ScanController.FEED_MAX_ROWS)) {
+                String best = Double.isNaN(s.bestRssi) ? "--" : String.format(Locale.US, "%.0f", s.bestRssi);
+                addRow(row++, BibMap.display(s.epc), ScanController.feedTime(s.lastMs), s.count + " / " + best);
             }
-        });
+        } else {
+            for (TagRead read : scan.getRecentReads()) {
+                addRow(row++, read.getDisplay(), read.getTimestamp(),
+                        read.getRssi().isEmpty() ? "--" : read.getRssi());
+            }
+        }
+    }
+
+    private void addRow(int index, String col1, String col2, String col3) {
+        LinearLayout rowLayout = new LinearLayout(getContext());
+        rowLayout.setOrientation(LinearLayout.HORIZONTAL);
+        rowLayout.setPadding(16, 16, 16, 16);
+        rowLayout.setBackgroundColor(getResources().getColor(
+                index % 2 == 0 ? R.color.surface_container_lowest : R.color.zinc_900,
+                getContext().getTheme()));
+
+        rowLayout.addView(cell(col1, R.color.primary_container, 16, Gravity.START));
+        rowLayout.addView(cell(col2, R.color.on_surface, 13, Gravity.CENTER));
+        rowLayout.addView(cell(col3, R.color.secondary, 13, Gravity.END));
+        feedList.addView(rowLayout);
+    }
+
+    private TextView cell(String text, int colorRes, int sizeSp, int gravity) {
+        TextView tv = new TextView(getContext());
+        tv.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        tv.setGravity(gravity);
+        tv.setText(text);
+        tv.setTextColor(getResources().getColor(colorRes, getContext().getTheme()));
+        tv.setTextSize(sizeSp);
+        return tv;
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        UHFManager uhf = UHFManager.getInstance();
-        if (session.isScanning()) {
-            session.stop();
-            uhf.stopInventory();
-        }
-        RufusClient.getInstance().doFinalClose();
+        // Only detach from the shared state. Scanning and uploads are owned by
+        // ScanController / UploadManager and deliberately keep running.
+        scan.removeListener(this);
         UploadManager.getInstance().removeListener(uploadListener);
-        UploadManager.getInstance().stop();
-        timerHandler.removeCallbacksAndMessages(null); // timer + pending feed render
-        if (toneGenerator != null) {
-            toneGenerator.release();
-            toneGenerator = null;
-        }
+        ClockCheck.removeListener(this);
+        uiHandler.removeCallbacksAndMessages(null);
+        feedRenderPending = false;
+        statusDot = null;
+        btnScan = null;
+        feedList = null;
+        tvClockWarning = null;
     }
 }

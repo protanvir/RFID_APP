@@ -114,6 +114,19 @@
             android:textSize="10sp"/>
     </LinearLayout>
 
+    <!-- Shown only when the device clock disagrees with internet time -->
+    <TextView
+        android:id="@+id/tv_clock_warning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:background="@color/zinc_900"
+        android:padding="@dimen/stack_sm"
+        android:textColor="@android:color/holo_red_light"
+        android:textSize="@dimen/label_caps_text_size"
+        android:textStyle="bold"
+        android:layout_marginBottom="@dimen/stack_sm"/>
+
     <!-- Action Buttons: Start/Stop + Clear side by side -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -175,6 +188,56 @@
         android:orientation="vertical"
         android:background="@color/zinc_900">
 
+        <!-- Feed tools: view switch, manual passing, gun start -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:orientation="horizontal"
+            android:background="@color/zinc_950">
+
+            <TextView
+                android:id="@+id/tv_view_toggle"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="@string/view_all_reads"
+                android:textColor="@color/primary_container"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textStyle="bold"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"/>
+
+            <TextView
+                android:id="@+id/tv_manual_bib"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="@string/manual_bib"
+                android:textColor="@color/primary_container"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textStyle="bold"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"/>
+
+            <TextView
+                android:id="@+id/tv_gun_start"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="@string/gun_start"
+                android:textColor="@color/primary_container"
+                android:textSize="@dimen/label_caps_text_size"
+                android:textStyle="bold"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"/>
+        </LinearLayout>
+
         <!-- Feed header -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -184,6 +247,7 @@
             android:padding="@dimen/stack_sm">
 
             <TextView
+                android:id="@+id/tv_col1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -194,6 +258,7 @@
                 android:letterSpacing="0.1"/>
 
             <TextView
+                android:id="@+id/tv_col2"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -205,6 +270,7 @@
                 android:letterSpacing="0.1"/>
 
             <TextView
+                android:id="@+id/tv_col3"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
