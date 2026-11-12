@@ -2,3 +2,10 @@
 # release signing — never commit
 keystore.properties
 app/release.keystore
+
+# build output and local machine state
+/app/build/
+/build/
+/.gradle/
+/local.properties
+
